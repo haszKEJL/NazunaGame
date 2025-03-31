@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nazuna's Night Out</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Nazuna's Night Out</h1>
+    <div class="game-container">
+        <canvas id="gameCanvas" width="800" height="608"></canvas> <!-- Adjusted height to match largest map (dungeon: 19 rows * 32px) -->
+        <div id="uiContainer">
+            <!-- UI Stats will be loaded here by ui.js -->
+            Loading UI...
+        </div>
+        <!-- Dialogue Box (Initially Hidden) -->
+        <div id="dialogueBox" class="dialogue-box">
+            <p id="dialogueSpeaker" class="dialogue-speaker"></p>
+            <p id="dialogueText" class="dialogue-text"></p>
+            <span class="dialogue-prompt">(Space/Enter)</span>
+        </div>
+    </div>
+
+    <!-- Inventory/Equipment Screen (Initially Hidden) -->
+    <div id="inventoryScreen" class="inventory-screen">
+        <h2>Inventory & Equipment</h2>
+        <div class="equipment-section">
+            <h3>Equipment</h3>
+            <div class="equip-slots">
+                <div class="equip-slot" data-slot="weapon">
+                    <span class="slot-label">Weapon</span>
+                    <div id="equipSlotWeapon" class="item-display"></div>
+                </div>
+                <div class="equip-slot" data-slot="armor">
+                    <span class="slot-label">Armor</span>
+                    <div id="equipSlotArmor" class="item-display"></div>
+                </div>
+                <!-- Add more slots later (helmet, shield, etc.) -->
+            </div>
+        </div>
+        <div class="inventory-section">
+            <h3>Inventory</h3>
+            <div id="inventoryGrid" class="inventory-grid">
+                <!-- Inventory items will be populated here by ui.js -->
+            </div>
+        </div>
+        <!-- Item Details & Upgrade Section -->
+        <div class="item-details-section">
+            <h3 id="selectedItemName">Select an Item</h3>
+            <div id="selectedItemStats"></div>
+            <div id="selectedItemUpgradeInfo"></div>
+            <button id="upgradeItemBtn" disabled>Upgrade</button>
+        </div>
+        <button id="closeInventoryBtn">Close (Tab)</button>
+    </div>
+
+    <!-- Login/Register Forms (Initially Hidden) -->
+    <div id="authForms" class="auth-forms">
+        <div id="registerForm" class="auth-form">
+            <h2>Register</h2>
+            <input type="text" id="registerUsername" placeholder="Username">
+            <input type="password" id="registerPassword" placeholder="Password">
+            <button id="registerBtn">Register</button>
+            <p>Already have an account? <a href="#" id="showLoginLink">Login</a></p>
+            <div id="registerMessage" class="auth-message"></div>
+        </div>
+
+        <div id="loginForm" class="auth-form" style="display: none;">
+            <h2>Login</h2>
+            <input type="text" id="loginUsername" placeholder="Username">
+            <input type="password" id="loginPassword" placeholder="Password">
+            <button id="loginBtn">Login</button>
+            <p>Need an account? <a href="#" id="showRegisterLink">Register</a></p>
+            <div id="loginMessage" class="auth-message"></div>
+        </div>
+    </div>
+
+    <!-- Stat Allocation Modal -->
+    <div id="statModal" class="modal">
+        <div class="modal-content">
+            <h2>Allocate Stat Points</h2>
+            <p>Points Remaining: <span id="modalPointsRemaining">0</span></p>
+            <div class="stat-line">
+                <span>Strength:</span>
+                <span id="modalStatStr">0</span>
+                <button class="modal-stat-button" data-stat="strength">+</button>
+            </div>
+            <div class="stat-line">
+                <span>Dexterity:</span>
+                <span id="modalStatDex">0</span>
+                <button class="modal-stat-button" data-stat="dexterity">+</button>
+            </div>
+            <div class="stat-line">
+                <span>Constitution:</span>
+                <span id="modalStatCon">0</span>
+                <button class="modal-stat-button" data-stat="constitution">+</button>
+            </div>
+            <div class="stat-line">
+                <span>Intelligence:</span>
+                <span id="modalStatInt">0</span>
+                <button class="modal-stat-button" data-stat="intelligence">+</button>
+            </div>
+            <div class="stat-line">
+                <span>Agility:</span>
+                <span id="modalStatAgi">0</span>
+                <button class="modal-stat-button" data-stat="agility">+</button>
+            </div>
+            <button id="closeStatModalBtn">Close</button>
+        </div>
+    </div>
+
+    <!-- UI Script (module) -->
+    <script type="module" src="ui.js"></script>
+
+    <!-- Main game script (module) -->
+    <script type="module" src="game.js"></script>
+
+    <!-- Authentication Scripts (Inline) -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const registerForm = document.getElementById('registerForm');
+            const loginForm = document.getElementById('loginForm');
+            const registerBtn = document.getElementById('registerBtn');
+            const loginBtn = document.getElementById('loginBtn');
+            const showLoginLink = document.getElementById('showLoginLink');
+            const showRegisterLink = document.getElementById('showRegisterLink');
+            const registerMessage = document.getElementById('registerMessage');
+            const loginMessage = document.getElementById('loginMessage');
+            const authForms = document.getElementById('authForms');
+            const gameContainer = document.querySelector('.game-container');
+
+            function showRegisterForm() {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+            }
+
+            function showLoginForm() {
+                registerForm.style.display = 'none';
+                loginForm.style.display = 'block';
+            }
+
+            function showGameUI() {
+                gameContainer.style.display = 'flex';
+                authForms.style.display = 'none';
+            }
+
+            function showAuthForms() {
+                gameContainer.style.display = 'none';
+                authForms.style.display = 'block';
+            }
+
+        async function registerUser(username, password) {
+            try {
+                const response = await fetch('http://localhost:5001/api/auth/register', { // Correct URL
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    registerMessage.textContent = data.message;
+                    registerMessage.classList.remove('error');
+                    registerMessage.classList.add('success');
+                    showLoginForm();
+                } else {
+                    registerMessage.textContent = data.message || 'Registration failed';
+                    registerMessage.classList.remove('success');
+                    registerMessage.classList.add('error');
+                }
+            } catch (error) {
+                console.error("Registration Error:", error);
+                registerMessage.textContent = 'Network error during registration';
+                registerMessage.classList.remove('success');
+                registerMessage.classList.add('error');
+            }
+        }
+
+        async function loginUser(username, password) {
+            try {
+                const response = await fetch('http://localhost:5001/api/auth/login', { // Correct URL
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('username', data.user.username); // Keep username for display if needed
+                    console.log("Login successful. Token:", data.token);
+                    console.log("Received user data:", data.user);
+
+                    // Initialize player state using the received data
+                    if (window.initializePlayerFromData) {
+                        window.initializePlayerFromData(data.user);
+                        // TODO: Trigger UI update after initialization (e.g., call updateUI from ui.js)
+                        // This might require making updateUI global or having game.js handle it.
+                        // For now, the game loop in game.js should eventually call updateUI.
+                    } else {
+                        console.error("initializePlayerFromData function not found on window object!");
+                        // Handle error - maybe show default state or an error message
+                    }
+
+                    showGameUI(); // Show the game interface
+                } else {
+                    loginMessage.textContent = data.message || 'Login failed';
+                    loginMessage.classList.remove('success');
+                    loginMessage.classList.add('error');
+                }
+            } catch (error) {
+                console.error("Login Error:", error);
+                loginMessage.textContent = 'Network error during login';
+                loginMessage.classList.remove('success');
+                loginMessage.classList.add('error');
+            }
+        }
+
+            // --- Event Listeners ---
+            showLoginLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showLoginForm();
+            });
+
+            showRegisterLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                showRegisterForm();
+            });
+
+            registerBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const username = document.getElementById('registerUsername').value;
+                const password = document.getElementById('registerPassword').value;
+                await registerUser(username, password);
+            });
+
+            loginBtn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const username = document.getElementById('loginUsername').value;
+                const password = document.getElementById('loginPassword').value;
+                await loginUser(username, password);
+            });
+
+            // --- Function to Fetch User Data and Initialize ---
+            async function fetchAndInitializePlayerData(token) {
+                console.log("Attempting to fetch user data with token...");
+                try {
+                    const response = await fetch('http://localhost:5001/api/auth/me', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.ok) {
+                        const userData = await response.json();
+                        console.log("Successfully fetched user data:", userData);
+                        localStorage.setItem('username', userData.username); // Update username just in case
+
+                        // Initialize player state
+                        if (window.initializePlayerFromData) {
+                            window.initializePlayerFromData(userData);
+                            // TODO: Trigger UI update if needed immediately
+                        } else {
+                            console.error("initializePlayerFromData function not found!");
+                        }
+                        showGameUI(); // Show game now that data is loaded
+                        console.log(`Welcome back, ${userData.username}!`);
+
+                    } else {
+                        // Handle errors like expired token (401/403) or user not found (404)
+                        console.error(`Failed to fetch user data: ${response.status}`);
+                        localStorage.removeItem('token'); // Remove invalid token
+                        localStorage.removeItem('username');
+                        showAuthForms(); // Show login forms
+                    }
+                } catch (error) {
+                    console.error("Network error while fetching user data:", error);
+                    // Handle network error - maybe show auth forms as fallback
+                    showAuthForms();
+                }
+            }
+
+            // --- Check Authentication State on Load ---
+            const token = localStorage.getItem('token');
+            if (token) {
+                console.log("Token found in localStorage. Fetching user data...");
+                fetchAndInitializePlayerData(token); // Fetch data using the token
+            } else {
+                console.log("No token found in localStorage. Showing auth forms.");
+                showAuthForms();
+            }
+        });
+    </script>
+</body>
+</html>
