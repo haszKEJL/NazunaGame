@@ -420,28 +420,11 @@ function setupListeners() {
     }
 } // End of setupListeners function
 
-// --- Check Authentication State on Load ---
-function checkAuthState() {
-    const token = localStorage.getItem('token');
-    if (token) {
-        console.log("Token found in localStorage:", token);
-        // TODO: Validate token with server (more secure)
-        // For now, just assume valid and update UI
-        showGameUI(); // Function to hide auth forms and show game
-        console.log(`Welcome back, ${localStorage.getItem('username')}!`);
-    } else {
-        console.log("No token found in localStorage. Showing auth forms.");
-        // Show auth forms if no token
-        showAuthForms(); // Show auth forms
-    }
-}
-
 // Setup listeners once the DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOMContentLoaded fired. Setting up listeners.");
     setupListeners(); // Call the combined setup function
-    // Check auth state and update UI
-    checkAuthState();
-    // Initial UI render
+    // REMOVED checkAuthState() call - auth.js handles initial UI state.
+    // Initial UI render (might show default values briefly before auth completes)
     updateUI();
 });

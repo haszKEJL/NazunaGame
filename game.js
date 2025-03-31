@@ -107,6 +107,7 @@ function initializeGame() {
 // --- Input Handling ---
 function setupInputHandlers() {
     window.addEventListener('keydown', (e) => {
+        console.log(`--- Keydown event fired: ${e.key} ---`); // ADDED: Confirm listener fires
         // Prevent default browser actions for keys we handle (like Tab, Space)
         if (['Tab', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             e.preventDefault();
@@ -157,10 +158,15 @@ function setupInputHandlers() {
              }
         }
 
-        // --- Clear keys for non-continuous actions ---
-        if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
-            delete keysPressed[e.key];
+        // --- Clear specific key on keyup ---
+        // This handles removing movement keys when released
+        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
+             delete keysPressed[e.key];
         }
+        // We don't need the general clear anymore as keyup handles specific keys.
+        // if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
+        //     delete keysPressed[e.key];
+        // }
     });
 }
 
@@ -376,15 +382,12 @@ function update() {
             }
         }
 
-        // Clear movement keys ONLY if a successful move/map change/combat start occurred
-        // This allows holding direction against walls/NPCs without clearing the key instantly
-        if (moved) {
-             // Check if the move was just bumping an NPC, if so, don't clear yet
-             const npcAtTarget = npcs.find(n => n.x === Math.floor((player.x + moveX) / TILE_SIZE) && n.y === Math.floor((player.y + moveY) / TILE_SIZE));
-             if (!npcAtTarget) { // If not bumping an NPC (or if move was successful)
-                 keysPressed = {}; // Clear movement keys
-             }
+        // Clear movement keys ONLY if combat starts
+        // Let keyup handle removing keys for normal movement stop
+        if (moved && gameState === 'combat') { // Only clear all keys if combat started
+            keysPressed = {};
         }
+        // REMOVED the general keysPressed = {} clear after successful move.
 
         // --- Camera Update (only in overworld) ---
         const mapWidth = getMapCols() * TILE_SIZE;
@@ -460,10 +463,10 @@ function draw() {
 
     // --- Draw based on Game State ---
     // Always draw the world first (map, entities) using camera offset
-    ctx.save();
+    // ctx.save(); // TEMP: Bypass camera
     // Log camera and player positions before drawing world
-    console.log(`Drawing world with camera: (${cameraX}, ${cameraY}), player: (${player.x}, ${player.y})`); // UNCOMMENTED
-    ctx.translate(-cameraX, -cameraY);
+    console.log(`Drawing world (NO CAMERA) player: (${player.x}, ${player.y})`); // UNCOMMENTED + Modified
+    // ctx.translate(-cameraX, -cameraY); // TEMP: Bypass camera
     console.log("Calling drawMap..."); // UNCOMMENTED
     drawMap(ctx);
     console.log("Calling drawEnemies..."); // UNCOMMENTED
@@ -472,7 +475,7 @@ function draw() {
     drawNpcs(ctx); // Draw NPCs
     console.log("Calling drawPlayer..."); // UNCOMMENTED
     drawPlayer(ctx);
-    ctx.restore();
+    // ctx.restore(); // TEMP: Bypass camera
 
     // Overlay screens based on state (Combat, Dialogue/Inventory are HTML, Trade later)
     if (gameState === 'combat') {
