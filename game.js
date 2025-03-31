@@ -53,25 +53,11 @@ let currentDialogueIndex = 0;
 let cameraX = 0;
 let cameraY = 0;
 
-// --- Player Data Readiness ---
-let resolvePlayerReady;
-const playerDataReadyPromise = new Promise(resolve => {
-    resolvePlayerReady = resolve;
-});
-
-// Function to signal that player data is loaded/initialized
-function signalPlayerReady() {
-    console.log("Signaling player data ready.");
-    if (resolvePlayerReady) {
-        resolvePlayerReady();
-    }
-}
-
-// Make functions accessible globally for auth.js
-window.signalPlayerReady = signalPlayerReady;
-window.initializePlayerFromData = initializePlayerFromData; // Expose the function from player.js
-
 // --- Initialization ---
+// We need to ensure both assets are loaded AND player data is initialized
+// before starting the main game logic.
+let assetsAreLoaded = false;
+let playerDataInitialized = false;
 function initializeGame() {
     // Initialize player's derived stats based on core stats BEFORE placing them
     // Initialize player's derived stats based on core stats
@@ -586,16 +572,47 @@ function gameLoop() {
     requestAnimationFrame(gameLoop); // Keep the loop running
 }
 
-// --- Start Game ---
-// Wait for both assets AND player data readiness before initializing
-console.log("Waiting for assets and player data...");
-Promise.all([
-    new Promise(resolve => onAssetsLoaded(resolve)), // Wrap asset loading in a promise
-    playerDataReadyPromise // Wait for the signal from auth.js
-]).then(() => {
-    console.log("Assets loaded and player data ready. Initializing game.");
-    initializeGame(); // Initialize game only after both are ready
-}).catch(error => {
-    console.error("Error during initialization:", error);
-    // Handle initialization error (e.g., show an error message)
+// --- Start Game Logic ---
+function attemptGameInitialization() {
+    if (assetsAreLoaded && playerDataInitialized) {
+        console.log("Assets loaded and player data initialized. Starting game.");
+        initializeGame(); // Initialize game only after both are ready
+    } else {
+        console.log(`Waiting: Assets Loaded=${assetsAreLoaded}, Player Data Initialized=${playerDataInitialized}`);
+    }
+}
+
+// Listen for asset loading completion
+console.log("Waiting for assets...");
+onAssetsLoaded(() => {
+    console.log("Assets finished loading.");
+    assetsAreLoaded = true;
+    attemptGameInitialization();
+});
+
+// Listen for the player data ready event from auth.js
+console.log("Waiting for player data ready signal...");
+document.addEventListener('playerDataReady', () => {
+    console.log("Received playerDataReady event.");
+    try {
+        const storedData = localStorage.getItem('initialPlayerData');
+        if (storedData) {
+            const initialData = JSON.parse(storedData);
+            console.log("Initializing player from stored data:", initialData);
+            initializePlayerFromData(initialData); // Use the imported function
+            localStorage.removeItem('initialPlayerData'); // Clean up storage
+        } else {
+            console.log("No initial player data found in storage, using defaults.");
+            // initializePlayerFromData should handle null/undefined gracefully or
+            // initializePlayerStats() might be called within initializeGame if needed.
+            initializePlayerFromData(null); // Explicitly pass null
+        }
+        playerDataInitialized = true;
+    } catch (error) {
+        console.error("Error processing initial player data:", error);
+        // Handle error, maybe proceed with defaults
+        initializePlayerFromData(null);
+        playerDataInitialized = true; // Mark as initialized even on error to proceed
+    }
+    attemptGameInitialization();
 });

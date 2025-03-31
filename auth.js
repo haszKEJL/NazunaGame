@@ -89,13 +89,14 @@ async function loginUser(username, password) {
                 window.initializePlayerFromData(data.user);
                 // TODO: Trigger UI update if needed immediately after init
             } else {
-                console.error("initializePlayerFromData function not found on window object!");
+                console.error("initializePlayerFromData function not found on window object! Game should handle initialization.");
             }
+            localStorage.setItem('initialPlayerData', JSON.stringify(data.user)); // Store data
             showGameUI(); // Show the game interface directly
-            window.signalPlayerReady(); // Signal that player data is ready
+            document.dispatchEvent(new CustomEvent('playerDataReady')); // Dispatch event
         } else {
             displayMessage('loginMessage', data.message || 'Login failed', false);
-            // Don't signal ready if login failed
+            // Don't dispatch event if login failed
         }
     } catch (error) {
         console.error("Login Error:", error);
@@ -122,22 +123,25 @@ async function fetchAndInitializePlayerData(token) {
                 window.initializePlayerFromData(userData);
                 // TODO: Trigger UI update if needed immediately
             } else {
-                console.error("initializePlayerFromData function not found!");
+                console.error("initializePlayerFromData function not found! Game should handle initialization.");
             }
+            localStorage.setItem('initialPlayerData', JSON.stringify(userData)); // Store data
             showGameUI(); // Show game now that data is loaded
             console.log(`Welcome back, ${userData.username}!`);
-            window.signalPlayerReady(); // Signal that player data is ready
+            document.dispatchEvent(new CustomEvent('playerDataReady')); // Dispatch event
         } else {
             console.error(`Failed to fetch user data: ${response.status}`);
             localStorage.removeItem('token'); // Remove invalid token
             localStorage.removeItem('username');
+            localStorage.removeItem('initialPlayerData'); // Clear stored data
             showAuthForms(); // Show login forms if token is invalid/expired
-            window.signalPlayerReady(); // Signal ready even if token invalid (use defaults)
+            document.dispatchEvent(new CustomEvent('playerDataReady')); // Dispatch event (use defaults)
         }
     } catch (error) {
         console.error("Network error while fetching user data:", error);
+        localStorage.removeItem('initialPlayerData'); // Clear stored data
         showAuthForms(); // Show auth forms on network error
-        window.signalPlayerReady(); // Signal ready even on network error (use defaults)
+        document.dispatchEvent(new CustomEvent('playerDataReady')); // Dispatch event (use defaults)
     }
 }
 
@@ -195,8 +199,9 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchAndInitializePlayerData(token); // Fetch data using the token
     } else {
         console.log("No token found in localStorage. Showing auth forms.");
+        localStorage.removeItem('initialPlayerData'); // Ensure no stale data
         showAuthForms(); // Show auth forms if no token
-        window.signalPlayerReady(); // Signal ready (use defaults)
+        document.dispatchEvent(new CustomEvent('playerDataReady')); // Dispatch event (use defaults)
     }
 });
 
