@@ -88,6 +88,7 @@ function initializeGame() {
     spawnEnemiesForMap(getCurrentMapId()); // Spawn enemies for the current map
     spawnNpcsForMap(getCurrentMapId()); // Spawn initial NPCs
     setupInputHandlers();
+    canvas.focus(); // Explicitly focus the canvas
     gameRunning = true;
     console.log("Game initialized. Starting loop...");
 
@@ -106,68 +107,76 @@ function initializeGame() {
 
 // --- Input Handling ---
 function setupInputHandlers() {
-    window.addEventListener('keydown', (e) => {
-        console.log(`--- Keydown event fired: ${e.key} ---`); // ADDED: Confirm listener fires
-        // Prevent default browser actions for keys we handle (like Tab, Space)
-        if (['Tab', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-            e.preventDefault();
-        }
+    // Listener on window (should ideally work)
+    window.addEventListener('keydown', handleKeyDown);
+    // Listener on canvas (as a fallback/test)
+    canvas.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    canvas.addEventListener('keyup', handleKeyUp); // Add keyup listener to canvas too
+}
 
-        // Only add keys needed for continuous press checks (movement, maybe combat actions)
-        if (gameState === 'overworld' && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-             keysPressed[e.key] = true;
-        } else if (gameState === 'combat' && ['a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
-             // Add combat keys to check in updateCombat if needed, though keyup might be sufficient
-             keysPressed[e.key] = true;
-        }
-    });
+function handleKeyDown(e) {
+    console.log(`--- Keydown event fired on ${e.currentTarget === window ? 'window' : 'canvas'}: ${e.key} ---`); // ADDED LOG
+    // Prevent default browser actions for keys we handle (like Tab, Space)
+    if (['Tab', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+    }
 
-    window.addEventListener('keyup', (e) => {
-        console.log(`[DEBUG] Keyup detected: ${e.key}, Current gameState: ${gameState}`); // DIAGNOSTIC LOG
+    // Only add keys needed for continuous press checks (movement, maybe combat actions)
+    if (gameState === 'overworld' && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+         console.log(`[DEBUG] Adding key to keysPressed: ${e.key}`); // ADDED LOG
+         keysPressed[e.key] = true;
+    } else if (gameState === 'combat' && ['a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
+         // Add combat keys to check in updateCombat if needed, though keyup might be sufficient
+         keysPressed[e.key] = true;
+    }
+}
 
-        // --- Inventory Toggle (Simplified) ---
-        if (e.key === 'Tab' || (gameState === 'inventory' && e.key === 'Escape')) {
-            console.log("[DEBUG] Toggling inventory via Tab/Escape."); // DIAGNOSTIC LOG
-            e.preventDefault();
-            toggleInventoryScreen();
-        }
-        // --- Other Single-Press Actions based on State ---
-        else if (gameState === 'overworld') {
-            if (e.key === 'h' || e.key === 'H') {
-                useItem('Health Potion');
-            } else if (e.key === 'e' || e.key === 'E') {
-                equipFirstAvailableItem();
-            } else if (e.key === ' ' || e.key === 'Enter') {
-                attemptInteraction();
-            } else if (e.key === 'p' || e.key === 'P') {
-                if (player.statPoints > 0) {
-                    openStatModal(); // TODO: Consider pausing game state here
-                } else {
-                    console.log("No stat points to allocate.");
-                }
+function handleKeyUp(e) {
+    console.log(`[DEBUG] Keyup detected on ${e.currentTarget === window ? 'window' : 'canvas'}: ${e.key}, Current gameState: ${gameState}`);
+
+    // --- Inventory Toggle (Simplified) ---
+    if (e.key === 'Tab' || (gameState === 'inventory' && e.key === 'Escape')) {
+        console.log("[DEBUG] Toggling inventory via Tab/Escape."); // DIAGNOSTIC LOG
+        e.preventDefault();
+        toggleInventoryScreen();
+    }
+    // --- Other Single-Press Actions based on State ---
+    else if (gameState === 'overworld') {
+        if (e.key === 'h' || e.key === 'H') {
+            useItem('Health Potion');
+        } else if (e.key === 'e' || e.key === 'E') {
+            equipFirstAvailableItem();
+        } else if (e.key === ' ' || e.key === 'Enter') {
+            attemptInteraction();
+        } else if (e.key === 'p' || e.key === 'P') {
+            if (player.statPoints > 0) {
+                openStatModal(); // TODO: Consider pausing game state here
+            } else {
+                console.log("No stat points to allocate.");
             }
-        } else if (gameState === 'dialogue') {
-             if (e.key === ' ' || e.key === 'Enter') {
-                 advanceDialogue();
-             }
-        } else if (gameState === 'combat') {
-             // Combat actions are processed in updateCombat based on keysPressed
-             // We just need to remove the key from keysPressed now that it's released
-             if (['a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
-                 delete keysPressed[e.key];
-             }
         }
-
-        // --- Clear specific key on keyup ---
-        // This handles removing movement keys when released
-        if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
+    } else if (gameState === 'dialogue') {
+         if (e.key === ' ' || e.key === 'Enter') {
+             advanceDialogue();
+         }
+    } else if (gameState === 'combat') {
+         // Combat actions are processed in updateCombat based on keysPressed
+         // We just need to remove the key from keysPressed now that it's released
+         if (['a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
              delete keysPressed[e.key];
-        }
-        // We don't need the general clear anymore as keyup handles specific keys.
-        // if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
-        //     delete keysPressed[e.key];
-        // }
-    });
+         }
+    }
+
+    // --- Clear specific key on keyup ---
+    // This handles removing movement keys when released
+    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
+         delete keysPressed[e.key];
+    }
+    // We don't need the general clear anymore as keyup handles specific keys.
+    // if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
+    //     delete keysPressed[e.key];
+    // }
 }
 
 // --- Inventory Toggle ---
@@ -463,10 +472,10 @@ function draw() {
 
     // --- Draw based on Game State ---
     // Always draw the world first (map, entities) using camera offset
-    // ctx.save(); // TEMP: Bypass camera
+    ctx.save(); // Restore camera
     // Log camera and player positions before drawing world
-    console.log(`Drawing world (NO CAMERA) player: (${player.x}, ${player.y})`); // UNCOMMENTED + Modified
-    // ctx.translate(-cameraX, -cameraY); // TEMP: Bypass camera
+    console.log(`Drawing world with camera: (${cameraX}, ${cameraY}), player: (${player.x}, ${player.y})`); // UNCOMMENTED
+    ctx.translate(-cameraX, -cameraY); // Restore camera
     console.log("Calling drawMap..."); // UNCOMMENTED
     drawMap(ctx);
     console.log("Calling drawEnemies..."); // UNCOMMENTED
@@ -475,7 +484,7 @@ function draw() {
     drawNpcs(ctx); // Draw NPCs
     console.log("Calling drawPlayer..."); // UNCOMMENTED
     drawPlayer(ctx);
-    // ctx.restore(); // TEMP: Bypass camera
+    ctx.restore(); // Restore camera
 
     // Overlay screens based on state (Combat, Dialogue/Inventory are HTML, Trade later)
     if (gameState === 'combat') {
