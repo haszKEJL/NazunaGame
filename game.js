@@ -282,7 +282,7 @@ function update() {
     }
 
     // Log state at start of update
-    console.log(`Update start: gameState=${gameState}, player=(${player.x}, ${player.y}), camera=(${cameraX}, ${cameraY}), keys=`, keysPressed); // Log keysPressed
+    //console.log(`Update start: gameState=${gameState}, player=(${player.x}, ${player.y}), camera=(${cameraX}, ${cameraY}), keys=`, keysPressed); // Log keysPressed
 
     // Only process movement/world/camera updates if in overworld
     if (gameState === 'overworld') {
@@ -429,7 +429,7 @@ function update() {
     // Note: Trade state updates will be handled later
 
     // Log state at end of update, before draw uses it
-    console.log(`Update end: gameState=${gameState}, player=(${player.x}, ${player.y}), camera=(${cameraX}, ${cameraY}), gameRunning=${gameRunning}`); // UNCOMMENTED
+    //console.log(`Update end: gameState=${gameState}, player=(${player.x}, ${player.y}), camera=(${cameraX}, ${cameraY}), gameRunning=${gameRunning}`); // UNCOMMENTED
 }
 
 // Combat update logic (This is the correct one, called inside update())
@@ -473,7 +473,7 @@ function draw() {
         return;
     }
     // If we get here, all flags are true.
-    console.log("Draw function proceeding..."); // UNCOMMENTED
+    //console.log("Draw function proceeding..."); // UNCOMMENTED
 
     // Clear the canvas
     ctx.fillStyle = '#333'; // Background color
@@ -481,19 +481,13 @@ function draw() {
 
     // --- Draw based on Game State ---
     // Always draw the world first (map, entities) using camera offset
-    ctx.save(); // Restore camera
-    // Log camera and player positions before drawing world
- //   console.log(`Drawing world with camera: (${cameraX}, ${cameraY}), player: (${player.x}, ${player.y})`); // UNCOMMENTED
- //   ctx.translate(-cameraX, -cameraY); // Restore camera
-  //  console.log("Calling drawMap..."); // UNCOMMENTED
-     drawMap(ctx);
-  //  console.log("Calling drawEnemies..."); // UNCOMMENTED
-     drawEnemies(ctx);
-  //  console.log("Calling drawNpcs..."); // UNCOMMENTED
-     drawNpcs(ctx); // Draw NPCs
-  //  console.log("Calling drawPlayer..."); // UNCOMMENTED
-     drawPlayer(ctx);
-     ctx.restore(); // Restore camera
+        ctx.save(); // Restore camera
+        ctx.translate(-cameraX, -cameraY); // Restore camera
+        drawMap(ctx);
+        drawEnemies(ctx);
+        drawNpcs(ctx); // Draw NPCs
+        drawPlayer(ctx);
+        ctx.restore(); // Restore camera
 
     // Overlay screens based on state (Combat, Dialogue/Inventory are HTML, Trade later)
     if (gameState === 'combat') {
