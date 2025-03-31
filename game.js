@@ -7,7 +7,8 @@ import {
     getMapCols,
     getMapRows,
     changeMap,
-    getCurrentMapId
+    getCurrentMapId,
+    getDefaultStartCoords // Import the new function
 } from './map.js';
 import { player, drawPlayer, useItem, equipFirstAvailableItem, initializePlayerStats, savePlayerData, initializePlayerFromData } from './player.js'; // Added savePlayerData and initializePlayerFromData
 import { enemies, drawEnemies, clearEnemies, spawnEnemiesForMap } from './enemy.js'; // Removed initializeEnemies import
@@ -63,19 +64,27 @@ function initializeGame() {
     // Initialize player's derived stats based on core stats
     // Note: initializePlayerFromData (called on login/refresh) already handles loading stats,
     // position, and setting player.loadedMapId. initializePlayerStats is a fallback.
-    if (!player.loadedMapId) { // Check if data was loaded
+    if (!player.loadedMapId) { // Check if data was loaded (set by initializePlayerFromData)
+        console.log("No loaded map ID found, initializing default stats.");
         initializePlayerStats(); // Initialize default stats if no data loaded
     }
 
-    // Set player starting map and position
-    // If player data was loaded, player.loadedMapId, player.x, player.y are set.
-    // Otherwise, use defaults. changeMap will use player.x/y if they are non-zero,
-    // or the map's default start position otherwise.
     const initialMapId = player.loadedMapId || 'world'; // Use loaded map ID or default
-    console.log(`Initializing game on map: ${initialMapId} at X:${player.x}, Y:${player.y}`);
-    changeMap(initialMapId, player); // Change to the correct map
 
-    // Spawn entities for the initial map
+    // Ensure player coordinates are valid numbers before using them.
+    // If loaded data was invalid or missing, get defaults for the target map.
+    // Use TILE_SIZE check as a basic validation for pixel coords.
+    if (typeof player.x !== 'number' || typeof player.y !== 'number' || isNaN(player.x) || isNaN(player.y) || player.x < 0 || player.y < 0) {
+        console.warn(`Invalid or missing loaded coordinates (${player.x}, ${player.y}). Getting defaults for map ${initialMapId}.`);
+        const defaultCoords = getDefaultStartCoords(initialMapId);
+        player.x = defaultCoords.x;
+        player.y = defaultCoords.y;
+    }
+
+    console.log(`Initializing game. Setting map to: ${initialMapId}. Player start coords: (${player.x}, ${player.y})`);
+    changeMap(initialMapId); // Change map data *after* coords are set
+
+    // Spawn entities for the initial map (needs to happen *after* changeMap sets currentMapId)
     spawnEnemiesForMap(getCurrentMapId()); // Spawn enemies for the current map
     spawnNpcsForMap(getCurrentMapId()); // Spawn initial NPCs
     setupInputHandlers();
@@ -250,7 +259,13 @@ function endDialogue() {
 
 // --- Game Loop ---
 function update() {
-    if (!gameRunning) return;
+    if (!gameRunning) {
+        // console.log("Update skipped: gameRunning is false"); // Reduce noise
+        return;
+    }
+
+    // Log state at start of update
+    console.log(`Update start: gameState=${gameState}, player=(${player.x}, ${player.y}), camera=(${cameraX}, ${cameraY})`); // UNCOMMENTED
 
     // Only process movement/world/camera updates if in overworld
     if (gameState === 'overworld') {
@@ -291,33 +306,51 @@ function update() {
             const targetTileType = getTileAt(targetTileX, targetTileY, getCurrentMap());
 
             // Check for map transitions first
-            const currentMapId = getCurrentMapId(); // Renamed variable for clarity
+            const currentMapId = getCurrentMapId();
             let mapChanged = false;
+            let newMapId = null;
+            let newPlayerCoords = null;
 
+            // Check for map transitions first
             if (currentMapId === 'world') {
                 if (targetTileType === TILE_CITY_ENTRANCE) {
-                    changeMap('city', player);
-                    mapChanged = true;
+                    newMapId = 'city';
+                    newPlayerCoords = getDefaultStartCoords(newMapId); // Get default start for city
                 } else if (targetTileType === TILE_DUNGEON_ENTRANCE) {
-                    changeMap('dungeon', player);
-                    mapChanged = true;
+                    newMapId = 'dungeon';
+                    newPlayerCoords = getDefaultStartCoords(newMapId); // Get default start for dungeon
                 }
             } else if (currentMapId === 'city' && targetTileType === TILE_DOOR && targetTileY === getMapRows() - 1) {
-                changeMap('world', player);
-                mapChanged = true;
+                newMapId = 'world';
+                // TODO: Ideally, place player near the city entrance they just exited from.
+                // For now, use default world start.
+                newPlayerCoords = getDefaultStartCoords(newMapId);
             } else if (currentMapId === 'dungeon') {
-                // Add logic to exit dungeon later
+                // TODO: Add logic to exit dungeon later, potentially finding the entrance tile
+                // if (targetTileType === TILE_FLOOR && targetTileX === 1 && targetTileY === 0) { // Example exit condition
+                //     newMapId = 'world';
+                //     newPlayerCoords = getDefaultStartCoords(newMapId); // Place near dungeon entrance on world map
+                // }
             }
 
-            if (mapChanged) {
+            // If a transition was triggered, update player coords and change map
+            if (newMapId && newPlayerCoords) {
+                console.log(`Transitioning to map ${newMapId}. New coords: (${newPlayerCoords.x}, ${newPlayerCoords.y})`);
+                player.x = newPlayerCoords.x;
+                player.y = newPlayerCoords.y;
+                changeMap(newMapId); // Change map data
+                mapChanged = true;
+
+                // Clear and respawn entities for the new map
                 clearEnemies();
                 clearNpcs();
-                spawnEnemiesForMap(getCurrentMapId());
+                spawnEnemiesForMap(getCurrentMapId()); // Use the *new* currentMapId
                 spawnNpcsForMap(getCurrentMapId());
-                moved = true;
+                moved = true; // Count map change as a move
             } else {
-                const enemyAtTarget = enemies.find(e => e.x === targetTileX && e.y === targetTileY);
-                const npcAtTarget = npcs.find(n => n.x === targetTileX && n.y === targetTileY);
+                // No map transition, check for combat/NPC/walkable
+                const enemyAtTarget = enemies.find(e => Math.floor(e.x / TILE_SIZE) === targetTileX && Math.floor(e.y / TILE_SIZE) === targetTileY);
+                const npcAtTarget = npcs.find(n => Math.floor(n.x / TILE_SIZE) === targetTileX && Math.floor(n.y / TILE_SIZE) === targetTileY);
 
                 if (enemyAtTarget) {
                     console.log(`Player encountered ${enemyAtTarget.type}!`);
@@ -373,6 +406,9 @@ function update() {
     // Note: Dialogue state updates are primarily handled by input (advanceDialogue)
     // Note: Inventory state updates are primarily handled by input (toggleInventoryScreen)
     // Note: Trade state updates will be handled later
+
+    // Log state at end of update, before draw uses it
+    console.log(`Update end: gameState=${gameState}, player=(${player.x}, ${player.y}), camera=(${cameraX}, ${cameraY}), gameRunning=${gameRunning}`); // UNCOMMENTED
 }
 
 // Combat update logic (This is the correct one, called inside update())
@@ -416,7 +452,7 @@ function draw() {
         return;
     }
     // If we get here, all flags are true.
-    // console.log("Draw function proceeding...");
+    console.log("Draw function proceeding..."); // UNCOMMENTED
 
     // Clear the canvas
     ctx.fillStyle = '#333'; // Background color
@@ -426,15 +462,15 @@ function draw() {
     // Always draw the world first (map, entities) using camera offset
     ctx.save();
     // Log camera and player positions before drawing world
-    // console.log(`Drawing world with camera: (${cameraX}, ${cameraY}), player: (${player.x}, ${player.y})`);
+    console.log(`Drawing world with camera: (${cameraX}, ${cameraY}), player: (${player.x}, ${player.y})`); // UNCOMMENTED
     ctx.translate(-cameraX, -cameraY);
-    // console.log("Calling drawMap..."); // Log before map draw
+    console.log("Calling drawMap..."); // UNCOMMENTED
     drawMap(ctx);
-    // console.log("Calling drawEnemies..."); // Log before enemy draw
+    console.log("Calling drawEnemies..."); // UNCOMMENTED
     drawEnemies(ctx);
-    // console.log("Calling drawNpcs..."); // Log before NPC draw
+    console.log("Calling drawNpcs..."); // UNCOMMENTED
     drawNpcs(ctx); // Draw NPCs
-    // console.log("Calling drawPlayer..."); // Log before player draw
+    console.log("Calling drawPlayer..."); // UNCOMMENTED
     drawPlayer(ctx);
     ctx.restore();
 
@@ -576,7 +612,11 @@ function drawCombatScreen() {
 
 
 function gameLoop() {
-    if (!gameRunning) return;
+    // Add a check here too, just in case gameRunning is modified between frames somehow
+    if (!gameRunning) {
+        console.log("Game loop stopping: gameRunning became false.");
+        return;
+    }
 
     update();
     draw();

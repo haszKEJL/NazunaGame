@@ -101,13 +101,20 @@ export function initializePlayerFromData(serverData) { // Added export keyword
     player.hp = Math.min(serverData.hp || player.maxHp, player.maxHp);
 
     // --- Load Position (but don't change map here) ---
-    // Use saved position if available, otherwise keep default (0,0) which will be overwritten by map default later
-    player.x = serverData.lastX || 5;
-    player.y = serverData.lastY || 5; // Use tile coordinates for now
+    // Load tile coordinates from server or use defaults
+    const loadedTileX = serverData.lastX; // Might be undefined
+    const loadedTileY = serverData.lastY; // Might be undefined
+
+    // Convert loaded/default tile coordinates to PIXEL coordinates for player state
+    // If loadedTileX/Y are undefined/invalid, getDefaultStartCoords will be used later in game.js
+    // We set potentially invalid coords here, game.js will validate and fix if needed.
+    player.x = (typeof loadedTileX === 'number') ? loadedTileX * TILE_SIZE : undefined; // Convert to pixels or keep undefined
+    player.y = (typeof loadedTileY === 'number') ? loadedTileY * TILE_SIZE : undefined; // Convert to pixels or keep undefined
+
     // Store the loaded map ID temporarily; game.js will use this to change map
     player.loadedMapId = serverData.lastMapId || 'world'; // Store the map ID to load
 
-    console.log("Player state initialized:", player);
+    console.log(`Player state initialized (Raw loaded coords: tileX=${loadedTileX}, tileY=${loadedTileY}). Pixel coords set to: (${player.x}, ${player.y})`, player);
 
     // Note: UI update should be triggered by the caller after this function runs.
     // Note: Map change needs to be triggered by the caller (game.js) using player.loadedMapId
@@ -413,10 +420,10 @@ export async function savePlayerData() {
         gold: player.gold,
         equipment: player.equipment, // Send the whole equipment object
         inventory: player.inventory,  // Send the whole inventory array
-        // Add position and map ID
+        // Add position and map ID (save TILE coordinates)
         lastMapId: getCurrentMapId(),
-        lastX: player.x,
-        lastY: player.y
+        lastX: Math.floor(player.x / TILE_SIZE), // Convert PIXEL to TILE for saving
+        lastY: Math.floor(player.y / TILE_SIZE)  // Convert PIXEL to TILE for saving
     };
 
     console.log("Attempting to save player data:", dataToSave);

@@ -101,62 +101,41 @@ export function getCurrentMapId() {
     return currentMapId;
 }
 
-export function changeMap(mapId, player) {
-    let newMapData;
-    let startTileX, startTileY; // Use tile coordinates for placement logic
-
-    // Store player's current world position if leaving world map
-    if (currentMapId === 'world' && (mapId === 'city' || mapId === 'dungeon')) {
-        worldMapPlayerStart.x = Math.floor(player.x / TILE_SIZE);
-        worldMapPlayerStart.y = Math.floor(player.y / TILE_SIZE);
-    }
-
+// Function to get default starting pixel coordinates for a map
+export function getDefaultStartCoords(mapId) {
+    let startTileX, startTileY;
+    let mapData; // Need map data to find entrances
 
     switch (mapId) {
         case 'world':
-            newMapData = largeWorldMap; // Use the large map
-            // Try to place player where they left off, otherwise find entrance
-            if (worldMapPlayerStart.x !== undefined && worldMapPlayerStart.y !== undefined) {
-                 // Place player adjacent to where they entered the city/dungeon
-                 // This logic might need refinement depending on which entrance they used
-                 // For now, just place them at the stored coords if possible
-                 startTileX = worldMapPlayerStart.x;
-                 startTileY = worldMapPlayerStart.y;
-                 // Clear stored position after using it
-                 worldMapPlayerStart.x = undefined;
-                 worldMapPlayerStart.y = undefined;
-
-            } else {
-                 // Fallback: Find the city entrance tile (or default if none)
-                 let entranceFound = false;
-                 // Prioritize finding the specific entrance the player used if possible (more complex)
-                 // Simple fallback: find *any* entrance or default
-                 for (let y = 0; y < newMapData.length; y++) {
-                    let x = newMapData[y].indexOf(TILE_CITY_ENTRANCE);
-                    if (x !== -1) {
-                        startTileX = x;
-                        startTileY = y + 1; // Place below city
-                        entranceFound = true;
-                        break;
-                    }
-                    x = newMapData[y].indexOf(TILE_DUNGEON_ENTRANCE);
-                     if (x !== -1) {
-                        startTileX = x;
-                        startTileY = y + 1; // Place below dungeon
-                        entranceFound = true;
-                        break;
-                    }
-                 }
-                 if (!entranceFound) { startTileX = 10; startTileY = 10; } // Default start pos on large map
-            }
+            mapData = largeWorldMap;
+            // Fallback: Find the city entrance tile (or default if none)
+            let entranceFound = false;
+            for (let y = 0; y < mapData.length; y++) {
+                let x = mapData[y].indexOf(TILE_CITY_ENTRANCE);
+                if (x !== -1) {
+                    startTileX = x;
+                    startTileY = y + 1; // Place below city
+                    entranceFound = true;
+                    break;
+                }
+                x = mapData[y].indexOf(TILE_DUNGEON_ENTRANCE);
+                 if (x !== -1) {
+                    startTileX = x;
+                    startTileY = y + 1; // Place below dungeon
+                    entranceFound = true;
+                    break;
+                }
+             }
+             if (!entranceFound) { startTileX = 10; startTileY = 10; } // Default start pos on large map
             break;
         case 'city':
-            newMapData = cityMap;
+            mapData = cityMap;
             // Find the bottom exit door to place the player near it when entering from world
              let cityExitFound = false;
-             for (let y = newMapData.length - 1; y >= 0; y--) {
-                const x = newMapData[y].indexOf(TILE_DOOR);
-                if (x !== -1 && y === newMapData.length - 1) { // Ensure it's the bottom door
+             for (let y = mapData.length - 1; y >= 0; y--) {
+                const x = mapData[y].indexOf(TILE_DOOR);
+                if (x !== -1 && y === mapData.length - 1) { // Ensure it's the bottom door
                     startTileX = x;
                     startTileY = y - 1; // Place above the door
                     cityExitFound = true;
@@ -166,22 +145,42 @@ export function changeMap(mapId, player) {
              if (!cityExitFound) { startTileX = 1; startTileY = 1; } // Fallback
             break;
         case 'dungeon':
-            newMapData = dungeonMap;
+            mapData = dungeonMap;
             startTileX = 1; // Default start for dungeon (top-left corner inside walls)
             startTileY = 1;
             break;
         default:
+            console.warn("Unknown map ID for default coords:", mapId);
+            startTileX = 1; startTileY = 1; // Generic fallback
+            break;
+    }
+    return { x: startTileX * TILE_SIZE, y: startTileY * TILE_SIZE };
+}
+
+
+// Function to change the current map data and ID
+export function changeMap(mapId) {
+    let newMapData;
+
+    switch (mapId) {
+        case 'world':
+            newMapData = largeWorldMap;
+            break;
+        case 'city':
+            newMapData = cityMap;
+            break;
+        case 'dungeon':
+            newMapData = dungeonMap;
+            break;
+        default:
             console.error("Unknown map ID:", mapId);
-            return;
+            return; // Don't change map if ID is invalid
     }
 
     currentMapId = mapId;
     currentMapData = newMapData;
-    // Update player position (pixel coordinates) based on the calculated start tile
-    player.x = startTileX * TILE_SIZE;
-    player.y = startTileY * TILE_SIZE;
-
-    console.log(`Changed map to ${mapId}. Player at tile (${startTileX}, ${startTileY})`);
+    // Player position is set *before* calling this function
+    console.log(`Changed map data to ${mapId}.`);
 }
 
 
