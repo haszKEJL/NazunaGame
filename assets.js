@@ -3,7 +3,13 @@ export const tileset = new Image();
 tileset.src = 'simple_tiles.png';
 let tilesetLoaded = false;
 tileset.onload = () => {
+    console.log("Tileset loaded: simple_tiles.png");
     tilesetLoaded = true;
+    checkAllAssetsLoaded();
+};
+tileset.onerror = () => {
+    console.error("Failed to load tileset: simple_tiles.png");
+    tilesetLoaded = true; // Mark as loaded anyway to prevent blocking, but log error
     checkAllAssetsLoaded();
 };
 
@@ -17,19 +23,29 @@ export const enemySprites = {
 let enemySpritesLoadedCount = 0;
 const totalEnemySprites = Object.keys(enemySprites).length;
 
-function enemySpriteLoaded() {
+function enemySpriteLoaded(spriteName) {
+    console.log(`Enemy sprite loaded: ${spriteName}`);
     enemySpritesLoadedCount++;
+    checkAllAssetsLoaded();
+}
+function enemySpriteError(spriteName) {
+    console.error(`Failed to load enemy sprite: ${spriteName}`);
+    enemySpritesLoadedCount++; // Increment even on error to prevent blocking
     checkAllAssetsLoaded();
 }
 
 enemySprites.slime.src = 'slime.png';
-enemySprites.slime.onload = enemySpriteLoaded;
+enemySprites.slime.onload = () => enemySpriteLoaded('slime.png');
+enemySprites.slime.onerror = () => enemySpriteError('slime.png');
 enemySprites.skeleton.src = 'skeleton.png';
-enemySprites.skeleton.onload = enemySpriteLoaded;
+enemySprites.skeleton.onload = () => enemySpriteLoaded('skeleton.png');
+enemySprites.skeleton.onerror = () => enemySpriteError('skeleton.png');
 enemySprites.demon.src = 'demon.png';
-enemySprites.demon.onload = enemySpriteLoaded;
+enemySprites.demon.onload = () => enemySpriteLoaded('demon.png');
+enemySprites.demon.onerror = () => enemySpriteError('demon.png');
 enemySprites.cultist.src = 'cultist.png';
-enemySprites.cultist.onload = enemySpriteLoaded;
+enemySprites.cultist.onload = () => enemySpriteLoaded('cultist.png');
+enemySprites.cultist.onerror = () => enemySpriteError('cultist.png');
 
 // --- Player Sprites ---
 export const playerSprites = {
@@ -41,19 +57,29 @@ export const playerSprites = {
 let playerSpritesLoadedCount = 0;
 const totalPlayerSprites = Object.keys(playerSprites).length;
 
-function playerSpriteLoaded() {
+function playerSpriteLoaded(spriteName) {
+    console.log(`Player sprite loaded: ${spriteName}`);
     playerSpritesLoadedCount++;
+    checkAllAssetsLoaded();
+}
+function playerSpriteError(spriteName) {
+    console.error(`Failed to load player sprite: ${spriteName}`);
+    playerSpritesLoadedCount++; // Increment even on error
     checkAllAssetsLoaded();
 }
 
 playerSprites.front.src = 'nazuna_front.png';
-playerSprites.front.onload = playerSpriteLoaded;
+playerSprites.front.onload = () => playerSpriteLoaded('nazuna_front.png');
+playerSprites.front.onerror = () => playerSpriteError('nazuna_front.png');
 playerSprites.back.src = 'nazuna_back.png';
-playerSprites.back.onload = playerSpriteLoaded;
+playerSprites.back.onload = () => playerSpriteLoaded('nazuna_back.png');
+playerSprites.back.onerror = () => playerSpriteError('nazuna_back.png');
 playerSprites.left.src = 'nazuna_left.png';
-playerSprites.left.onload = playerSpriteLoaded;
+playerSprites.left.onload = () => playerSpriteLoaded('nazuna_left.png');
+playerSprites.left.onerror = () => playerSpriteError('nazuna_left.png');
 playerSprites.right.src = 'nazuna_right.png';
-playerSprites.right.onload = playerSpriteLoaded;
+playerSprites.right.onload = () => playerSpriteLoaded('nazuna_right.png');
+playerSprites.right.onerror = () => playerSpriteError('nazuna_right.png');
 
 // --- NPC Sprites (Placeholders) ---
 export const npcSprites = {
@@ -63,16 +89,24 @@ export const npcSprites = {
 let npcSpritesLoadedCount = 0;
 const totalNpcSprites = Object.keys(npcSprites).length;
 
-function npcSpriteLoaded() {
+function npcSpriteLoaded(spriteName) {
+    console.log(`NPC sprite loaded: ${spriteName}`);
     npcSpritesLoadedCount++;
+    checkAllAssetsLoaded();
+}
+function npcSpriteError(spriteName) {
+    console.error(`Failed to load NPC sprite: ${spriteName}`);
+    npcSpritesLoadedCount++; // Increment even on error
     checkAllAssetsLoaded();
 }
 
 // Using existing sprite as placeholder
 npcSprites.merchant.src = 'nazuna_front.png'; // Placeholder
-npcSprites.merchant.onload = npcSpriteLoaded;
+npcSprites.merchant.onload = () => npcSpriteLoaded('merchant (nazuna_front.png)');
+npcSprites.merchant.onerror = () => npcSpriteError('merchant (nazuna_front.png)');
 npcSprites.villager.src = 'nazuna_front.png'; // Placeholder
-npcSprites.villager.onload = npcSpriteLoaded;
+npcSprites.villager.onload = () => npcSpriteLoaded('villager (nazuna_front.png)');
+npcSprites.villager.onerror = () => npcSpriteError('villager (nazuna_front.png)');
 
 
 // --- Asset Loading Check ---

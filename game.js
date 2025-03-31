@@ -410,7 +410,13 @@ function updateCombat() {
 
 
 function draw() {
-    if (!gameRunning || !areAssetsLoaded()) return;
+    // Use local flags set by initialization logic
+    if (!gameRunning || !assetsAreLoaded || !playerDataInitialized) {
+         // console.log(`Draw skipped: gameRunning=${gameRunning}, assetsAreLoaded=${assetsAreLoaded}, playerDataInitialized=${playerDataInitialized}`); // Optional detailed log
+        return;
+    }
+    // If we get here, all flags are true.
+    // console.log("Draw function proceeding...");
 
     // Clear the canvas
     ctx.fillStyle = '#333'; // Background color
@@ -419,10 +425,16 @@ function draw() {
     // --- Draw based on Game State ---
     // Always draw the world first (map, entities) using camera offset
     ctx.save();
+    // Log camera and player positions before drawing world
+    // console.log(`Drawing world with camera: (${cameraX}, ${cameraY}), player: (${player.x}, ${player.y})`);
     ctx.translate(-cameraX, -cameraY);
+    // console.log("Calling drawMap..."); // Log before map draw
     drawMap(ctx);
+    // console.log("Calling drawEnemies..."); // Log before enemy draw
     drawEnemies(ctx);
+    // console.log("Calling drawNpcs..."); // Log before NPC draw
     drawNpcs(ctx); // Draw NPCs
+    // console.log("Calling drawPlayer..."); // Log before player draw
     drawPlayer(ctx);
     ctx.restore();
 
