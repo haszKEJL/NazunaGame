@@ -369,7 +369,10 @@ function update() {
                     lastMoveTime = now; // Update last move time on successful transition
             } else {
                 // No map transition, check for combat/NPC/walkable
-                const enemyAtTarget = enemies.find(e => Math.floor(e.x / TILE_SIZE) === targetTileX && Math.floor(e.y / TILE_SIZE) === targetTileY);
+                // Check for enemy at PLAYER'S target location, not the other way around
+                const playerTileX = Math.floor(player.x / TILE_SIZE);
+                const playerTileY = Math.floor(player.y / TILE_SIZE);
+                const enemyAtTarget = enemies.find(e => Math.floor(e.x / TILE_SIZE) === playerTileX && Math.floor(e.y / TILE_SIZE) === playerTileY);
                 const npcAtTarget = npcs.find(n => Math.floor(n.x / TILE_SIZE) === targetTileX && Math.floor(n.y / TILE_SIZE) === targetTileY);
 
                 if (enemyAtTarget) {

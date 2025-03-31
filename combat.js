@@ -100,17 +100,21 @@ function checkCombatEnd() {
         // --- Item Drop Logic (Themed) ---
         if (currentEnemy.dropTable && currentEnemy.dropTable.length > 0) {
             addCombatLog("Checking for drops...");
-            currentEnemy.dropTable.forEach(drop => {
-                if (Math.random() < drop.chance) {
-                    const itemData = items[drop.itemKey];
-                    if (itemData) {
-                        addItemToInventory(itemData); // Use function from player.js
-                        addCombatLog(`Enemy dropped ${itemData.name}!`);
-                    } else {
-                        console.warn(`Item key '${drop.itemKey}' not found in items.js for drop table.`);
+            const numberOfDrops = Math.floor(Math.random() * 3); // Up to 3 drops
+            for (let i = 0; i < numberOfDrops; i++) {
+                currentEnemy.dropTable.forEach(drop => {
+                    const increasedChance = Math.min(1.0, drop.chance + 0.2); // Increase chance by 20%, max 100%
+                    if (Math.random() < increasedChance) {
+                        const itemData = items[drop.itemKey];
+                        if (itemData) {
+                            addItemToInventory(itemData); // Use function from player.js
+                            addCombatLog(`Enemy dropped ${itemData.name}!`);
+                        } else {
+                            console.warn(`Item key '${drop.itemKey}' not found in items.js for drop table.`);
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
         // --- Cleanup ---

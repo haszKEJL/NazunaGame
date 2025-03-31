@@ -12,7 +12,7 @@ const enemyTypes = {
         spriteKey: 'slime', baseHp: 15, baseAtk: 4, baseDef: 1, baseDex: 2, baseXp: 338, baseGoldDrop: 3, minLvl: 1, maxLvl: 4,
         dropTable: [ // Example: item key from items.js and chance (0 to 1)
             { itemKey: 'healthPotion', chance: 0.3 }, // 30% chance for potion
-            // { itemKey: 'slimeGel', chance: 0.5 } // Example: Add slimeGel to items.js later
+            { itemKey: 'dagger', chance: 0.05 },
         ]
     },
     skeleton: {
@@ -20,7 +20,7 @@ const enemyTypes = {
         dropTable: [
             { itemKey: 'healthPotion', chance: 0.1 },
             { itemKey: 'basicSword', chance: 0.05 }, // Low chance for basic sword
-            // { itemKey: 'bone', chance: 0.4 } // Example: Add bone later
+            { itemKey: 'shield', chance: 0.03 },
         ]
     },
     cultist: {
@@ -28,7 +28,7 @@ const enemyTypes = {
          dropTable: [
             { itemKey: 'healthPotion', chance: 0.2 },
             { itemKey: 'leatherArmor', chance: 0.08 },
-            // { itemKey: 'darkRobes', chance: 0.1 } // Example
+            { itemKey: 'magicStaff', chance: 0.02 },
         ]
     },
     demon: {
@@ -37,7 +37,7 @@ const enemyTypes = {
             { itemKey: 'healthPotion', chance: 0.1 },
             { itemKey: 'ironSword', chance: 0.1 }, // Chance for better sword
             { itemKey: 'chainmail', chance: 0.05 },
-            // { itemKey: 'demonHeart', chance: 0.05 } // Example rare drop
+            { itemKey: 'steelSword', chance: 0.03 },
         ]
     },
 };
