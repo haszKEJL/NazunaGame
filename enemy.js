@@ -180,15 +180,16 @@ export function spawnEnemiesForMap(mapId) {
  * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
  */
 export function drawEnemies(ctx) {
-    if (!areAssetsLoaded()) return; // Ensure assets are ready
+    // Redundant check removed: if (!areAssetsLoaded()) return;
 
     // Convert tile coordinates to pixel coordinates for drawing
     for (const enemy of enemies) {
-        if (enemy.sprite && enemy.sprite.complete) {
+        // Removed .complete check, rely on onAssetsLoaded
+        if (enemy.sprite) {
              ctx.drawImage(
                 enemy.sprite,
-                enemy.x * TILE_SIZE, // Assuming enemy x/y are tile coords
-                enemy.y * TILE_SIZE, // Assuming enemy x/y are tile coords
+                enemy.x * TILE_SIZE, // Enemy x/y are tile coords
+                enemy.y * TILE_SIZE, // Enemy x/y are tile coords
                 TILE_SIZE,
                 TILE_SIZE
             );
@@ -196,7 +197,7 @@ export function drawEnemies(ctx) {
             // Optionally draw a placeholder if sprite isn't ready
             ctx.fillStyle = 'red'; // Placeholder color
             ctx.fillRect(enemy.x * TILE_SIZE + 8, enemy.y * TILE_SIZE + 8, TILE_SIZE - 16, TILE_SIZE - 16);
-            // console.warn(`Enemy sprite not ready for ${enemy.type}`);
+            console.warn(`Enemy sprite object missing for ${enemy.type}`);
         }
     }
 }

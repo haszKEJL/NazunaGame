@@ -265,7 +265,7 @@ function update() {
     }
 
     // Log state at start of update
-    console.log(`Update start: gameState=${gameState}, player=(${player.x}, ${player.y}), camera=(${cameraX}, ${cameraY})`); // UNCOMMENTED
+    console.log(`Update start: gameState=${gameState}, player=(${player.x}, ${player.y}), camera=(${cameraX}, ${cameraY}), keys=`, keysPressed); // Log keysPressed
 
     // Only process movement/world/camera updates if in overworld
     if (gameState === 'overworld') {
@@ -503,6 +503,15 @@ function draw() {
 
     // Always update the HTML UI container (unaffected by canvas translate)
     updateUI();
+
+    // --- Simple Drawing Test (Outside save/restore) ---
+    ctx.fillStyle = 'yellow';
+    ctx.fillRect(10, 10, 50, 50); // Draw a yellow square at top-left
+    ctx.fillStyle = 'white';
+    ctx.font = '12px sans-serif';
+    ctx.fillText(`State: ${gameState}`, 15, 30);
+    ctx.fillText(`Coords: ${player.x},${player.y}`, 15, 50);
+
 }
 
 // Placeholder for drawing the combat screen

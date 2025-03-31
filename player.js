@@ -378,9 +378,10 @@ export function upgradeInventoryItem(itemIndex) {
  * @param {CanvasRenderingContext2D} ctx - The canvas rendering context.
  */
 export function drawPlayer(ctx) {
-    if (!player.sprite || !player.sprite.complete) {
-        // console.warn("Player sprite not loaded yet.");
-        // Optionally draw a placeholder
+    // Rely on onAssetsLoaded to ensure sprite is ready or errored.
+    // The .complete check can be unreliable in the first frame.
+    if (!player.sprite) {
+        console.warn("Player sprite object is missing.");
         return;
     }
     // Player x and y are now pixel coordinates
