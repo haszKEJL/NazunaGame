@@ -1,146 +1,204 @@
 console.log("--- auth.js script started execution ---");
 
 // --- Get DOM Elements ---
-const registerForm = document.getElementById('registerForm');
-const loginForm = document.getElementById('loginForm');
-const registerBtn = document.getElementById('registerBtn');
-const loginBtn = document.getElementById('loginBtn');
-const showLoginLink = document.getElementById('showLoginLink');
-const showRegisterLink = document.getElementById('showRegisterLink');
-const registerMessage = document.getElementById('registerMessage');
-const loginMessage = document.getElementById('loginMessage');
-
-if (!registerForm || !loginForm || !registerBtn || !loginBtn || !showLoginLink || !showRegisterLink || !registerMessage || !loginMessage) {
-    console.error("CRITICAL: One or more authentication form elements are missing from index.html!");
-}
+// It's better practice to get elements inside the functions that use them
+// or within the DOMContentLoaded listener to ensure they exist.
 
 // --- UI Switching Functions ---
 function showRegisterForm() {
-    loginForm.style.display = 'none';
-    registerForm.style.display = 'block';
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    if (loginForm) loginForm.style.display = 'none';
+    if (registerForm) registerForm.style.display = 'block';
 }
 
 function showLoginForm() {
-    registerForm.style.display = 'none';
-    loginForm.style.display = 'block';
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) registerForm.style.display = 'none';
+    if (loginForm) loginForm.style.display = 'block';
 }
 
-// --- Event Listeners ---
-if (showLoginLink) {
-    showLoginLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showLoginForm();
-    });
+function showGameUI() {
+    const gameContainer = document.querySelector('.game-container');
+    const authForms = document.getElementById('authForms');
+    if (gameContainer) gameContainer.style.display = 'flex'; // Or 'block' depending on layout needs
+    if (authForms) authForms.style.display = 'none';
 }
 
-if (showRegisterLink) {
-    showRegisterLink.addEventListener('click', (e) => {
-        e.preventDefault();
-        showRegisterForm();
-    });
+function showAuthForms() {
+    const gameContainer = document.querySelector('.game-container');
+    const authForms = document.getElementById('authForms');
+    if (gameContainer) gameContainer.style.display = 'none';
+    if (authForms) authForms.style.display = 'block';
+    showLoginForm(); // Default to showing login form when auth is needed
+}
+
+// --- Message Display ---
+function displayMessage(elementId, message, isSuccess) {
+    const messageElement = document.getElementById(elementId);
+    if (messageElement) {
+        messageElement.textContent = message;
+        if (isSuccess) {
+            messageElement.classList.remove('error');
+            messageElement.classList.add('success');
+        } else {
+            messageElement.classList.remove('success');
+            messageElement.classList.add('error');
+        }
+    }
 }
 
 // --- Authentication Functions ---
 async function registerUser(username, password) {
     try {
-        const response = await fetch('/api/auth/register', { // Adjust URL if needed
+        const response = await fetch('/api/auth/register', { // Relative URL
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
         });
-
         const data = await response.json();
-
         if (response.ok) {
-            registerMessage.textContent = data.message;
-            registerMessage.classList.remove('error');
-            registerMessage.classList.add('success');
-            showLoginForm(); // Automatically switch to login form after successful registration
+            displayMessage('registerMessage', data.message, true);
+            showLoginForm();
         } else {
-            registerMessage.textContent = data.message || 'Registration failed';
-            registerMessage.classList.remove('success');
-            registerMessage.classList.add('error');
+            displayMessage('registerMessage', data.message || 'Registration failed', false);
         }
     } catch (error) {
         console.error("Registration Error:", error);
-        registerMessage.textContent = 'Network error during registration';
-        registerMessage.classList.remove('success');
-        registerMessage.classList.add('error');
+        displayMessage('registerMessage', 'Network error during registration', false);
     }
 }
 
 async function loginUser(username, password) {
     try {
-        const response = await fetch('/api/auth/login', { // Adjust URL if needed
+        const response = await fetch('/api/auth/login', { // Relative URL
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ username, password })
         });
-
         const data = await response.json();
-
         if (response.ok) {
-            // Store the token (e.g., in localStorage)
             localStorage.setItem('token', data.token);
-            localStorage.setItem('username', data.user.username); // Store username
+            localStorage.setItem('username', data.user.username);
             console.log("Login successful. Token:", data.token);
-            // TODO: Redirect to game or update UI to show logged-in state
-            loginMessage.textContent = 'Login successful!';
-            loginMessage.classList.remove('error');
-            loginMessage.classList.add('success');
-            // For now, just reload the game (simplest way to refresh UI)
-            window.location.reload(); // Reload the page
+            console.log("Received user data:", data.user);
+
+            // Initialize player state using the received data
+            if (window.initializePlayerFromData) {
+                window.initializePlayerFromData(data.user);
+                // TODO: Trigger UI update if needed immediately after init
+            } else {
+                console.error("initializePlayerFromData function not found on window object!");
+            }
+            showGameUI(); // Show the game interface directly
+            window.signalPlayerReady(); // Signal that player data is ready
         } else {
-            loginMessage.textContent = data.message || 'Login failed';
-            loginMessage.classList.remove('success');
-            loginMessage.classList.add('error');
+            displayMessage('loginMessage', data.message || 'Login failed', false);
+            // Don't signal ready if login failed
         }
     } catch (error) {
         console.error("Login Error:", error);
-        loginMessage.textContent = 'Network error during login';
-        loginMessage.classList.remove('success');
-        loginMessage.classList.add('error');
+        displayMessage('loginMessage', 'Network error during login', false);
     }
 }
 
-// --- Form Submission Listeners ---
-if (registerBtn) {
-    registerBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('registerUsername').value;
-        const password = document.getElementById('registerPassword').value;
-        await registerUser(username, password);
-    });
+// --- Function to Fetch User Data and Initialize ---
+async function fetchAndInitializePlayerData(token) {
+    console.log("Attempting to fetch user data with token...");
+    try {
+        const response = await fetch('/api/auth/me', { // Relative URL
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const userData = await response.json();
+            console.log("Successfully fetched user data:", userData);
+            localStorage.setItem('username', userData.username); // Update username
+
+            // Initialize player state
+            if (window.initializePlayerFromData) {
+                window.initializePlayerFromData(userData);
+                // TODO: Trigger UI update if needed immediately
+            } else {
+                console.error("initializePlayerFromData function not found!");
+            }
+            showGameUI(); // Show game now that data is loaded
+            console.log(`Welcome back, ${userData.username}!`);
+            window.signalPlayerReady(); // Signal that player data is ready
+        } else {
+            console.error(`Failed to fetch user data: ${response.status}`);
+            localStorage.removeItem('token'); // Remove invalid token
+            localStorage.removeItem('username');
+            showAuthForms(); // Show login forms if token is invalid/expired
+            window.signalPlayerReady(); // Signal ready even if token invalid (use defaults)
+        }
+    } catch (error) {
+        console.error("Network error while fetching user data:", error);
+        showAuthForms(); // Show auth forms on network error
+        window.signalPlayerReady(); // Signal ready even on network error (use defaults)
+    }
 }
 
-if (loginBtn) {
-    loginBtn.addEventListener('click', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('loginUsername').value;
-        const password = document.getElementById('loginPassword').value;
-        await loginUser(username, password);
-    });
-}
-
-// --- Initialization ---
-// Check if there's a token in localStorage on page load
+// --- Initialization and Event Listeners ---
 document.addEventListener('DOMContentLoaded', () => {
     console.log("auth.js DOMContentLoaded");
+
+    // Get elements needed for listeners
+    const registerBtn = document.getElementById('registerBtn');
+    const loginBtn = document.getElementById('loginBtn');
+    const showLoginLink = document.getElementById('showLoginLink');
+    const showRegisterLink = document.getElementById('showRegisterLink');
+
+    // --- Event Listeners ---
+    if (showLoginLink) {
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showLoginForm();
+        });
+    }
+
+    if (showRegisterLink) {
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            showRegisterForm();
+        });
+    }
+
+    if (registerBtn) {
+        registerBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const usernameInput = document.getElementById('registerUsername');
+            const passwordInput = document.getElementById('registerPassword');
+            if (usernameInput && passwordInput) {
+                await registerUser(usernameInput.value, passwordInput.value);
+            }
+        });
+    }
+
+    if (loginBtn) {
+        loginBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            const usernameInput = document.getElementById('loginUsername');
+            const passwordInput = document.getElementById('loginPassword');
+            if (usernameInput && passwordInput) {
+                await loginUser(usernameInput.value, passwordInput.value);
+            }
+        });
+    }
+
+    // --- Check Authentication State on Load ---
     const token = localStorage.getItem('token');
     if (token) {
-        console.log("Token found in localStorage:", token);
-        // TODO: Validate token with server (more secure)
-        // For now, just assume valid and update UI
-        // Example: showGameUI(); // Function to hide auth forms and show game
-        // For now, just log the user in the console
-        console.log(`Welcome back, ${localStorage.getItem('username')}!`);
+        console.log("Token found in localStorage. Fetching user data...");
+        fetchAndInitializePlayerData(token); // Fetch data using the token
     } else {
         console.log("No token found in localStorage. Showing auth forms.");
-        // Show auth forms if no token
-        showRegisterForm(); // Or show login form by default
+        showAuthForms(); // Show auth forms if no token
+        window.signalPlayerReady(); // Signal ready (use defaults)
     }
 });
+
+// Export functions if needed by other modules (though likely not needed here)
+// export { showGameUI, showAuthForms };

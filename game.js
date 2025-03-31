@@ -9,7 +9,7 @@ import {
     changeMap,
     getCurrentMapId
 } from './map.js';
-import { player, drawPlayer, useItem, equipFirstAvailableItem, initializePlayerStats, savePlayerData } from './player.js'; // Added savePlayerData
+import { player, drawPlayer, useItem, equipFirstAvailableItem, initializePlayerStats, savePlayerData, initializePlayerFromData } from './player.js'; // Added savePlayerData and initializePlayerFromData
 import { enemies, drawEnemies, clearEnemies, spawnEnemiesForMap } from './enemy.js'; // Removed initializeEnemies import
 import { npcs, drawNpcs, clearNpcs, spawnNpcsForMap, getNpcAt } from './npc.js'; // Import NPC functions
 import {
@@ -52,6 +52,24 @@ let currentDialogueIndex = 0;
 // --- Camera State ---
 let cameraX = 0;
 let cameraY = 0;
+
+// --- Player Data Readiness ---
+let resolvePlayerReady;
+const playerDataReadyPromise = new Promise(resolve => {
+    resolvePlayerReady = resolve;
+});
+
+// Function to signal that player data is loaded/initialized
+function signalPlayerReady() {
+    console.log("Signaling player data ready.");
+    if (resolvePlayerReady) {
+        resolvePlayerReady();
+    }
+}
+
+// Make functions accessible globally for auth.js
+window.signalPlayerReady = signalPlayerReady;
+window.initializePlayerFromData = initializePlayerFromData; // Expose the function from player.js
 
 // --- Initialization ---
 function initializeGame() {
@@ -569,6 +587,15 @@ function gameLoop() {
 }
 
 // --- Start Game ---
-// Wait for assets to load before initializing and starting the game loop
-console.log("Waiting for assets...");
-onAssetsLoaded(initializeGame);
+// Wait for both assets AND player data readiness before initializing
+console.log("Waiting for assets and player data...");
+Promise.all([
+    new Promise(resolve => onAssetsLoaded(resolve)), // Wrap asset loading in a promise
+    playerDataReadyPromise // Wait for the signal from auth.js
+]).then(() => {
+    console.log("Assets loaded and player data ready. Initializing game.");
+    initializeGame(); // Initialize game only after both are ready
+}).catch(error => {
+    console.error("Error during initialization:", error);
+    // Handle initialization error (e.g., show an error message)
+});
