@@ -1,9 +1,12 @@
 {
   "name": "nazuna",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "nazuna-server/server.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node nazuna-server/server.js"
+  },
+  "engines": {
+    "node": "18.x"
   },
   "keywords": [],
   "author": "",

@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path'); // Add path module
 
 // --- Basic Setup ---
 const app = express();
@@ -14,6 +15,10 @@ const PORT = process.env.PORT || 5001; // Use port from .env or default
 app.use(cors());
 // Parse JSON request bodies
 app.use(express.json());
+
+// --- Serve Static Files ---
+// Serve frontend files from the parent directory
+app.use(express.static(path.join(__dirname, '..')));
 
 // --- Database Connection ---
 const dbURI = process.env.MONGODB_URI;
@@ -37,19 +42,21 @@ mongoose.connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
         process.exit(1); // Exit if DB connection fails
     });
 
-// --- Routes ---
-// Placeholder route
-app.get('/', (req, res) => {
-    res.send('Nazuna Game Server is running!');
-});
-
-// --- Authentication Routes ---
+// --- API Routes ---
+// Authentication Routes
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
 
-// --- Player Data Routes ---
+// Player Data Routes
 const playerRoutes = require('./routes/player'); // Require the new player routes
 app.use('/api/player', playerRoutes); // Mount them under /api/player
+
+// --- Catch-all for SPA routing (Optional, but good practice) ---
+// If no API route or static file matched, send the main index.html file.
+// This allows client-side routing to handle paths like /game, /profile etc.
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
+});
 
 // --- Start Server ---
 app.listen(PORT, () => {
