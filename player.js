@@ -62,7 +62,7 @@ export function recalculateStats() {
 }
 
 // Function to initialize player state from server data
-function initializePlayerFromData(serverData) {
+export function initializePlayerFromData(serverData) { // Added export keyword
     console.log("Initializing player data from server:", serverData);
     if (!serverData) {
         console.error("No server data provided for player initialization.");
@@ -112,9 +112,6 @@ function initializePlayerFromData(serverData) {
     // Note: UI update should be triggered by the caller after this function runs.
     // Note: Map change needs to be triggered by the caller (game.js) using player.loadedMapId
 }
-
-// Make it globally accessible for the inline script in index.html
-window.initializePlayerFromData = initializePlayerFromData;
 
 // Initialize HP and stats on game start (used as fallback if no server data)
 export function initializePlayerStats() {
@@ -425,7 +422,7 @@ export async function savePlayerData() {
     console.log("Attempting to save player data:", dataToSave);
 
     try {
-        const response = await fetch('http://localhost:5001/api/player/save', {
+        const response = await fetch('/api/player/save', { // Use relative URL
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
