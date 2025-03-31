@@ -123,6 +123,7 @@ function updateInventoryUI() {
     }
 
     // Populate Inventory Grid
+    console.log("UI: Populating inventory grid. Player inventory:", JSON.stringify(player.inventory)); // Log inventory before loop
     player.inventory.forEach((item, index) => {
         const itemDiv = createItemDiv(item, index); // Pass inventory index
         inventoryGrid.appendChild(itemDiv);
@@ -199,6 +200,7 @@ function calculateUpgradeCost(item) {
 
 // Helper function to create an item div (used for both equip and inventory)
 function createItemDiv(item, identifier) {
+    console.log(`UI: Creating item div for:`, item, `Identifier:`, identifier); // Add detailed log
     const itemDiv = document.createElement('div');
     itemDiv.classList.add('inventory-item'); // Use same base class for styling
     // Add specific dataset based on whether it's equipped or inventory index
@@ -207,6 +209,12 @@ function createItemDiv(item, identifier) {
         itemDiv.classList.add('equipped-item'); // Maybe different style later
     } else { // It's an inventory index
         itemDiv.dataset.inventoryIndex = identifier;
+    }
+
+    if (!item || !item.name) { // Check if item or item.name is missing
+        console.error("UI: Invalid item data passed to createItemDiv:", item);
+        itemDiv.textContent = 'Error'; // Display error if item is invalid
+        return itemDiv;
     }
 
     itemDiv.textContent = item.name; // Placeholder: Use name

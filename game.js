@@ -185,6 +185,7 @@ function handleKeyUp(e) {
 function toggleInventoryScreen() {
     if (gameState === 'overworld') {
         gameState = 'inventory';
+        console.log("GAME: Player inventory before showing UI:", JSON.stringify(player.inventory)); // Log inventory state
         showInventory(); // Call UI function
         keysPressed = {}; // Clear movement keys
         console.log("Switched to inventory state.");
@@ -369,10 +370,9 @@ function update() {
                     lastMoveTime = now; // Update last move time on successful transition
             } else {
                 // No map transition, check for combat/NPC/walkable
-                // Check for enemy at PLAYER'S target location, not the other way around
-                const playerTileX = Math.floor(player.x / TILE_SIZE);
-                const playerTileY = Math.floor(player.y / TILE_SIZE);
-                const enemyAtTarget = enemies.find(e => Math.floor(e.x / TILE_SIZE) === playerTileX && Math.floor(e.y / TILE_SIZE) === playerTileY);
+                // Check for enemy at the PLAYER'S TARGET tile location by comparing player's target tile coords with enemy's tile coords
+                console.log(`GAME: Checking collision at target tile (${targetTileX}, ${targetTileY}). Enemies present:`, JSON.stringify(enemies.map(e => ({ type: e.type, x: e.x, y: e.y })))); // Log target and enemy coords
+                const enemyAtTarget = enemies.find(e => e.x === targetTileX && e.y === targetTileY);
                 const npcAtTarget = npcs.find(n => Math.floor(n.x / TILE_SIZE) === targetTileX && Math.floor(n.y / TILE_SIZE) === targetTileY);
 
                 if (enemyAtTarget) {
