@@ -481,19 +481,19 @@ function draw() {
 
     // --- Draw based on Game State ---
     // Always draw the world first (map, entities) using camera offset
-  //  ctx.save(); // Restore camera
+    ctx.save(); // Restore camera
     // Log camera and player positions before drawing world
  //   console.log(`Drawing world with camera: (${cameraX}, ${cameraY}), player: (${player.x}, ${player.y})`); // UNCOMMENTED
  //   ctx.translate(-cameraX, -cameraY); // Restore camera
   //  console.log("Calling drawMap..."); // UNCOMMENTED
-  //  drawMap(ctx);
+     drawMap(ctx);
   //  console.log("Calling drawEnemies..."); // UNCOMMENTED
-  //  drawEnemies(ctx);
+     drawEnemies(ctx);
   //  console.log("Calling drawNpcs..."); // UNCOMMENTED
-  //  drawNpcs(ctx); // Draw NPCs
+     drawNpcs(ctx); // Draw NPCs
   //  console.log("Calling drawPlayer..."); // UNCOMMENTED
-  //  drawPlayer(ctx);
-  //  ctx.restore(); // Restore camera
+     drawPlayer(ctx);
+     ctx.restore(); // Restore camera
 
     // Overlay screens based on state (Combat, Dialogue/Inventory are HTML, Trade later)
     if (gameState === 'combat') {
