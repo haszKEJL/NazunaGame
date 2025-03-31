@@ -109,16 +109,14 @@ function initializeGame() {
 
 // --- Input Handling ---
 function setupInputHandlers() {
-    // Listener on window (should ideally work)
+    // Attach listeners only to the window for global input handling
     window.addEventListener('keydown', handleKeyDown);
-    // Listener on canvas (as a fallback/test)
-    canvas.addEventListener('keydown', handleKeyDown);
     window.addEventListener('keyup', handleKeyUp);
-    canvas.addEventListener('keyup', handleKeyUp); // Add keyup listener to canvas too
+    console.log("Input handlers attached to window.");
 }
 
 function handleKeyDown(e) {
-    console.log(`--- Keydown event fired on ${e.currentTarget === window ? 'window' : 'canvas'}: ${e.key} ---`); // ADDED LOG
+    // console.log(`--- Keydown event fired on window: ${e.key} ---`); // Less verbose log
     // Prevent default browser actions for keys we handle (like Tab, Space)
     if (['Tab', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
         e.preventDefault();
@@ -135,7 +133,7 @@ function handleKeyDown(e) {
 }
 
 function handleKeyUp(e) {
-    console.log(`[DEBUG] Keyup detected on ${e.currentTarget === window ? 'window' : 'canvas'}: ${e.key}, Current gameState: ${gameState}`);
+    // console.log(`[DEBUG] Keyup detected on window: ${e.key}, Current gameState: ${gameState}`); // Less verbose log
 
     // --- Inventory Toggle (Simplified) ---
     if (e.key === 'Tab' || (gameState === 'inventory' && e.key === 'Escape')) {

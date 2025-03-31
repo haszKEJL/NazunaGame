@@ -21,8 +21,15 @@ const dialogueSpeaker = document.getElementById('dialogueSpeaker');
 const dialogueText = document.getElementById('dialogueText');
 // Inventory Screen Elements
 const inventoryScreen = document.getElementById('inventoryScreen');
+const equipSlotHelmet = document.getElementById('equipSlotHelmet');
+const equipSlotNecklace = document.getElementById('equipSlotNecklace');
+const equipSlotTalisman = document.getElementById('equipSlotTalisman');
 const equipSlotWeapon = document.getElementById('equipSlotWeapon');
 const equipSlotArmor = document.getElementById('equipSlotArmor');
+const equipSlotShield = document.getElementById('equipSlotShield');
+const equipSlotRing1 = document.getElementById('equipSlotRing1');
+const equipSlotRing2 = document.getElementById('equipSlotRing2');
+const equipSlotBoots = document.getElementById('equipSlotBoots');
 const inventoryGrid = document.getElementById('inventoryGrid');
 const closeInventoryBtn = document.getElementById('closeInventoryBtn');
 // Item Details Elements
@@ -44,8 +51,8 @@ const loginMessage = document.getElementById('loginMessage');
 // --- State for UI ---
 let selectedInventoryIndex = null; // Track selected item index
 
-// Check for essential elements
-if (!uiContainer || !gameContainer || !statModal || !modalContent || !closeModalBtn || !dialogueBox || !dialogueSpeaker || !dialogueText || !inventoryScreen || !equipSlotWeapon || !equipSlotArmor || !inventoryGrid || !closeInventoryBtn || !selectedItemName || !selectedItemStats || !selectedItemUpgradeInfo || !upgradeItemBtn || !authForms || !registerForm || !loginForm || !registerBtn || !loginBtn || !showLoginLink || !showRegisterLink || !registerMessage || !loginMessage) {
+// Check for essential elements (add new slots)
+if (!uiContainer || !gameContainer || !statModal || !modalContent || !closeModalBtn || !dialogueBox || !dialogueSpeaker || !dialogueText || !inventoryScreen || !equipSlotHelmet || !equipSlotNecklace || !equipSlotTalisman || !equipSlotWeapon || !equipSlotArmor || !equipSlotShield || !equipSlotRing1 || !equipSlotRing2 || !equipSlotBoots || !inventoryGrid || !closeInventoryBtn || !selectedItemName || !selectedItemStats || !selectedItemUpgradeInfo || !upgradeItemBtn || !authForms || !registerForm || !loginForm || !registerBtn || !loginBtn || !showLoginLink || !showRegisterLink || !registerMessage || !loginMessage) {
     console.error("CRITICAL: One or more essential UI elements are missing from index.html!");
 }
 
@@ -101,29 +108,43 @@ export function hideInventory() {
 
 // Function to update the inventory screen display
 function updateInventoryUI() {
-    if (!equipSlotWeapon || !equipSlotArmor || !inventoryGrid) return;
+    // Add checks for new elements
+    if (!equipSlotHelmet || !equipSlotNecklace || !equipSlotTalisman || !equipSlotWeapon || !equipSlotArmor || !equipSlotShield || !equipSlotRing1 || !equipSlotRing2 || !equipSlotBoots || !inventoryGrid) return;
 
-    // Clear previous content
+    // Clear previous content for all slots
+    equipSlotHelmet.innerHTML = '';
+    equipSlotNecklace.innerHTML = '';
+    equipSlotTalisman.innerHTML = '';
     equipSlotWeapon.innerHTML = '';
     equipSlotArmor.innerHTML = '';
+    equipSlotShield.innerHTML = '';
+    equipSlotRing1.innerHTML = '';
+    equipSlotRing2.innerHTML = '';
+    equipSlotBoots.innerHTML = '';
     inventoryGrid.innerHTML = '';
     selectedInventoryIndex = null; // Reset selection on UI update
     updateSelectedItemDetails(null); // Clear details pane
 
-    // Populate Equipment Slots
-    if (player.equipment.weapon) {
-        const item = player.equipment.weapon;
-        const itemDiv = createItemDiv(item, 'weapon'); // Pass slot type
-        equipSlotWeapon.appendChild(itemDiv);
-    }
-    if (player.equipment.armor) {
-        const item = player.equipment.armor;
-        const itemDiv = createItemDiv(item, 'armor'); // Pass slot type
-        equipSlotArmor.appendChild(itemDiv);
+    // Populate Equipment Slots (Iterate through player equipment)
+    for (const slot in player.equipment) {
+        const item = player.equipment[slot];
+        if (item) {
+            const itemDiv = createItemDiv(item, slot); // Pass slot name
+            const slotElement = document.getElementById(`equipSlot${slot.charAt(0).toUpperCase() + slot.slice(1)}`);
+            if (slotElement) {
+                slotElement.appendChild(itemDiv);
+            } else {
+                console.warn(`UI: Could not find slot element for '${slot}'`);
+            }
+        }
     }
 
     // Populate Inventory Grid
     console.log("UI: Populating inventory grid. Player inventory:", JSON.stringify(player.inventory)); // Log inventory before loop
+    if (!player.inventory || !Array.isArray(player.inventory)) {
+        console.error("UI: player.inventory is not a valid array!", player.inventory);
+        return; // Stop if inventory is invalid
+    }
     player.inventory.forEach((item, index) => {
         const itemDiv = createItemDiv(item, index); // Pass inventory index
         inventoryGrid.appendChild(itemDiv);
@@ -274,8 +295,15 @@ export function updateUI() {
 
     const potion = player.inventory.find(i => i.name === 'Health Potion');
     const potionCount = potion ? potion.quantity : 0;
-    const weaponName = player.equipment.weapon ? player.equipment.weapon.name : 'None';
-    const armorName = player.equipment.armor ? player.equipment.armor.name : 'None';
+    // Dynamically build equipment display string
+    let equipmentHTML = '';
+    for (const slot in player.equipment) {
+        const item = player.equipment[slot];
+        const itemName = item ? item.name : 'None';
+        // Capitalize slot name for display
+        const slotDisplayName = slot.charAt(0).toUpperCase() + slot.slice(1);
+        equipmentHTML += `<p>${slotDisplayName}: ${itemName}</p>`;
+    }
 
     // Display stat points, but no button here anymore
     const statPointsHTML = `<p>Stat Points: ${player.statPoints} ${player.statPoints > 0 ? '(Press P to allocate)' : ''}</p>`;
@@ -299,8 +327,7 @@ export function updateUI() {
         <p>Gold: ${player.gold}</p> <!-- Display Gold -->
         <hr>
         <p>Potions (H): ${potionCount}</p>
-        <p>Weapon: ${weaponName}</p>
-        <p>Armor: ${armorName}</p>
+        ${equipmentHTML} <!-- Display all equipment -->
         <p>(E to Equip)</p>
         <p>(Tab for Inv)</p> <!-- Added hint for inventory -->
         <button id="logoutBtn">Logout</button> <!-- Logout Button -->
@@ -308,28 +335,28 @@ export function updateUI() {
 
     uiContainer.innerHTML = uiHTML;
 
-    // Add event listener for logout button
+    // Re-attach event listener for logout button every time UI updates
+    // This ensures it's always present after innerHTML overwrite
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        // Check if listener already exists to prevent duplicates if updateUI is called often
-        if (!logoutBtn.dataset.listenerAttached) {
-            logoutBtn.addEventListener('click', async () => { // Make listener async
-                console.log("Logout button clicked. Attempting to save data first...");
-                try {
-                    await savePlayerData(); // Wait for save to complete
-                    console.log("Data save attempt finished. Proceeding with logout.");
-                } catch (error) {
-                    console.error("Error during pre-logout save:", error);
-                    // Decide if logout should proceed even if save fails? For now, yes.
-                } finally {
-                    // Clear local storage and reload regardless of save success/failure
-                    localStorage.removeItem('token');
-                    localStorage.removeItem('username');
-                    window.location.reload(); // Reload to trigger auth check
-                }
-            });
-            logoutBtn.dataset.listenerAttached = 'true'; // Mark as attached
-        }
+        logoutBtn.addEventListener('click', async () => { // Make listener async
+            console.log("Logout button clicked. Attempting to save data first...");
+            try {
+                await savePlayerData(); // Wait for save to complete
+                console.log("Data save attempt finished. Proceeding with logout.");
+            } catch (error) {
+                console.error("Error during pre-logout save:", error);
+                // Decide if logout should proceed even if save fails? For now, yes.
+            } finally {
+                // Clear local storage and reload regardless of save success/failure
+                console.log("Clearing local storage and reloading...");
+                localStorage.removeItem('token');
+                localStorage.removeItem('username');
+                window.location.reload(); // Reload to trigger auth check
+            }
+        });
+    } else {
+        console.warn("Logout button not found after UI update.");
     }
 
     // No longer need to attach listener for the open button here

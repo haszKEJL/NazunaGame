@@ -10,17 +10,20 @@ export let enemies = [];
 const enemyTypes = {
     slime: {
         spriteKey: 'slime', baseHp: 15, baseAtk: 4, baseDef: 1, baseDex: 2, baseXp: 338, baseGoldDrop: 3, minLvl: 1, maxLvl: 4,
-        dropTable: [ // Example: item key from items.js and chance (0 to 1)
-            { itemKey: 'healthPotion', chance: 0.3 }, // 30% chance for potion
+        dropTable: [
+            { itemKey: 'healthPotion', chance: 0.3 },
             { itemKey: 'dagger', chance: 0.05 },
+            { itemKey: 'leatherBoots', chance: 0.02 },
         ]
     },
     skeleton: {
         spriteKey: 'skeleton', baseHp: 25, baseAtk: 7, baseDef: 3, baseDex: 5, baseXp: 203, baseGoldDrop: 10, minLvl: 2, maxLvl: 5,
         dropTable: [
             { itemKey: 'healthPotion', chance: 0.1 },
-            { itemKey: 'basicSword', chance: 0.05 }, // Low chance for basic sword
-            { itemKey: 'shield', chance: 0.03 },
+            { itemKey: 'basicSword', chance: 0.05 },
+            { itemKey: 'woodenShield', chance: 0.04 },
+            { itemKey: 'ironHelmet', chance: 0.02 },
+            { itemKey: 'ringOfProtection', chance: 0.01 },
         ]
     },
     cultist: {
@@ -28,16 +31,23 @@ const enemyTypes = {
          dropTable: [
             { itemKey: 'healthPotion', chance: 0.2 },
             { itemKey: 'leatherArmor', chance: 0.08 },
-            { itemKey: 'magicStaff', chance: 0.02 },
+            { itemKey: 'magicStaff', chance: 0.03 },
+            { itemKey: 'talismanOfWisdom', chance: 0.01 },
+            { itemKey: 'throwingKnives', chance: 0.05 },
         ]
     },
     demon: {
         spriteKey: 'demon', baseHp: 40, baseAtk: 10, baseDef: 5, baseDex: 7, baseXp: 430, baseGoldDrop: 25, minLvl: 4, maxLvl: 7,
         dropTable: [
             { itemKey: 'healthPotion', chance: 0.1 },
-            { itemKey: 'ironSword', chance: 0.1 }, // Chance for better sword
+            { itemKey: 'ironSword', chance: 0.1 },
             { itemKey: 'chainmail', chance: 0.05 },
-            { itemKey: 'steelSword', chance: 0.03 },
+            { itemKey: 'steelSword', chance: 0.04 },
+            { itemKey: 'steelHelmet', chance: 0.03 },
+            { itemKey: 'ironBoots', chance: 0.03 },
+            { itemKey: 'ironShield', chance: 0.02 },
+            { itemKey: 'amuletOfStrength', chance: 0.01 },
+            { itemKey: 'ringOfPower', chance: 0.01 },
         ]
     },
 };

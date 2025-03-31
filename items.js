@@ -205,5 +205,196 @@ export const items = {
         upgradeLevel: 0,
         maxUpgradeLevel: 5
     },
-    // Add more items here later (e.g., better weapons, helmets, boots, rings)
+    // --- New Items ---
+    ironHelmet: {
+        name: 'Iron Helmet',
+        type: 'armor',
+        slot: 'helmet',
+        stats: { defense: 4, constitution: 1 },
+        stackable: false,
+        baseValue: 35,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    steelHelmet: {
+        name: 'Steel Helmet',
+        type: 'armor',
+        slot: 'helmet',
+        stats: { defense: 6, constitution: 2 },
+        stackable: false,
+        baseValue: 55,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    leatherBoots: {
+        name: 'Leather Boots',
+        type: 'armor',
+        slot: 'boots',
+        stats: { defense: 1, agility: 2 },
+        stackable: false,
+        baseValue: 25,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    ironBoots: {
+        name: 'Iron Boots',
+        type: 'armor',
+        slot: 'boots',
+        stats: { defense: 3, agility: 1 },
+        stackable: false,
+        baseValue: 40,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    woodenShield: {
+        name: 'Wooden Shield',
+        type: 'armor',
+        slot: 'shield',
+        stats: { defense: 3 },
+        stackable: false,
+        baseValue: 15,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    ironShield: {
+        name: 'Iron Shield',
+        type: 'armor',
+        slot: 'shield',
+        stats: { defense: 6, strength: 1 },
+        stackable: false,
+        baseValue: 45,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    steelShield: {
+        name: 'Steel Shield',
+        type: 'armor',
+        slot: 'shield',
+        stats: { defense: 9, strength: 2 },
+        stackable: false,
+        baseValue: 70,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    amuletOfStrength: {
+        name: 'Amulet of Strength',
+        type: 'armor',
+        slot: 'necklace',
+        stats: { strength: 2 },
+        stackable: false,
+        baseValue: 60,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    amuletOfDexterity: {
+        name: 'Amulet of Dexterity',
+        type: 'armor',
+        slot: 'necklace',
+        stats: { dexterity: 2 },
+        stackable: false,
+        baseValue: 60,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    ringOfPower: {
+        name: 'Ring of Power',
+        type: 'armor',
+        slot: 'ring', // Use generic 'ring' slot
+        stats: { attack: 2 },
+        stackable: false,
+        baseValue: 50,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    ringOfProtection: {
+        name: 'Ring of Protection',
+        type: 'armor',
+        slot: 'ring',
+        stats: { defense: 2 },
+        stackable: false,
+        baseValue: 50,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    ringOfAgility: {
+        name: 'Ring of Agility',
+        type: 'armor',
+        slot: 'ring',
+        stats: { agility: 2 },
+        stackable: false,
+        baseValue: 50,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    talismanOfWisdom: {
+        name: 'Talisman of Wisdom',
+        type: 'armor',
+        slot: 'talisman',
+        stats: { intelligence: 3 },
+        stackable: false,
+        baseValue: 80,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    talismanOfFortitude: {
+        name: 'Talisman of Fortitude',
+        type: 'armor',
+        slot: 'talisman',
+        stats: { constitution: 3 },
+        stackable: false,
+        baseValue: 80,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    // Add 5 more diverse items
+    greatHelm: {
+        name: 'Great Helm',
+        type: 'armor',
+        slot: 'helmet',
+        stats: { defense: 8, constitution: 1 },
+        stackable: false,
+        baseValue: 85,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    platedGreaves: {
+        name: 'Plated Greaves',
+        type: 'armor',
+        slot: 'boots',
+        stats: { defense: 5 },
+        stackable: false,
+        baseValue: 65,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    towerShield: {
+        name: 'Tower Shield',
+        type: 'armor',
+        slot: 'shield',
+        stats: { defense: 12, strength: -1 }, // Heavy shield penalty
+        stackable: false,
+        baseValue: 100,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    pendantOfCourage: {
+        name: 'Pendant of Courage',
+        type: 'armor',
+        slot: 'necklace',
+        stats: { attack: 1, defense: 1 },
+        stackable: false,
+        baseValue: 70,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    },
+    signetRing: {
+        name: 'Signet Ring',
+        type: 'armor',
+        slot: 'ring',
+        stats: { goldDropBonus: 0.05 }, // Example: 5% gold bonus (needs implementation)
+        stackable: false,
+        baseValue: 40,
+        upgradeLevel: 0,
+        maxUpgradeLevel: 5
+    }
 };

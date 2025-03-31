@@ -26,8 +26,14 @@ export let player = {
     inventory: [],
     equipment: {
         weapon: null,
-        armor: null,
-        // Add other slots later? (shield, helmet, etc.)
+        armor: null, // Body armor
+        helmet: null,
+        boots: null,
+        shield: null,
+        necklace: null,
+        ring1: null,
+        ring2: null,
+        talisman: null
     },
     statPoints: 3, // Start with more points for testing new stats
     gold: 50 // Starting gold
@@ -85,10 +91,17 @@ export function initializePlayerFromData(serverData) { // Added export keyword
     player.gold = serverData.gold || 0;
 
     // Equipment needs careful handling - assume server sends full objects
+    // Initialize with defaults first, then overwrite with server data if available
     player.equipment = {
         weapon: serverData.equipment?.weapon || null,
         armor: serverData.equipment?.armor || null,
-        // Add other slots if they exist in serverData.equipment
+        helmet: serverData.equipment?.helmet || null,
+        boots: serverData.equipment?.boots || null,
+        shield: serverData.equipment?.shield || null,
+        necklace: serverData.equipment?.necklace || null,
+        ring1: serverData.equipment?.ring1 || null,
+        ring2: serverData.equipment?.ring2 || null,
+        talisman: serverData.equipment?.talisman || null
     };
 
     // Inventory needs careful handling - assume server sends array of objects
@@ -260,8 +273,30 @@ export function equipItem(itemIndex) {
         return;
     }
 
-    const slot = itemToEquip.slot;
-    const currentItem = player.equipment[slot];
+    let slot = itemToEquip.slot; // Get the intended slot
+
+    // Special handling for rings
+    if (slot === 'ring') {
+        if (!player.equipment.ring1) {
+            slot = 'ring1'; // Equip in ring1 if empty
+        } else if (!player.equipment.ring2) {
+            slot = 'ring2'; // Equip in ring2 if ring1 is full
+        } else {
+            // Both ring slots are full, unequip ring1 by default
+            addItemToInventory(player.equipment.ring1);
+            console.log(`Unequipped ${player.equipment.ring1.name} from ring1.`);
+            player.equipment.ring1 = null; // Clear slot before equipping new one
+            slot = 'ring1'; // Equip the new ring in ring1
+        }
+    }
+
+    // Check if the final determined slot exists in player.equipment
+    if (!(slot in player.equipment)) {
+        console.error(`Invalid equipment slot determined: ${slot}`);
+        return;
+    }
+
+    const currentItem = player.equipment[slot]; // Get item currently in the target slot
 
     if (currentItem) {
         addItemToInventory(currentItem); // Add it back to inventory

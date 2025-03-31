@@ -1,310 +1,432 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'); /* Keep pixel font for title */
+
+:root {
+    --bg-primary: #1a1a2e; /* Dark blue/purple */
+    --bg-secondary: #2a2a4e; /* Slightly lighter */
+    --bg-tertiary: #3a3a6e; /* Even lighter */
+    --text-primary: #e0e0e0; /* Light grey */
+    --text-secondary: #a0a0c0; /* Muted purple/grey */
+    --accent-primary: #ffcc66; /* Gold/Yellow */
+    --accent-secondary: #66ccff; /* Light blue */
+    --border-color: #5a5a8e;
+    --success-color: #4CAF50;
+    --error-color: #f44336;
+    --font-main: 'Inter', sans-serif;
+    --font-title: 'Press Start 2P', cursive;
+    --border-radius: 6px;
+    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
 
 body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    height: 100vh;
+    justify-content: flex-start; /* Align to top */
+    min-height: 100vh;
     margin: 0;
-    background-color: #222;
-    color: #eee;
-    font-family: 'Press Start 2P', cursive; /* Apply pixel font */
-    font-size: 10px; /* Adjust base size for pixel font */
+    padding-top: 20px; /* Add some top padding */
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: var(--font-main);
+    font-size: 14px; /* Slightly larger base font */
+    line-height: 1.6;
 }
 
 canvas {
-    border: 1px solid #eee;
-    background-color: #333;
+    border: 1px solid var(--border-color);
+    background-color: #000; /* Black canvas background */
+    box-shadow: var(--box-shadow);
 }
 
 h1 {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    font-family: var(--font-title);
+    color: var(--accent-primary);
+    font-size: 24px; /* Adjust title size */
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 .game-container {
-    display: flex; /* Arrange canvas and UI side-by-side */
-    align-items: flex-start; /* Align items to the top */
-    gap: 20px; /* Add some space between canvas and UI */
+    display: flex;
+    align-items: flex-start;
+    gap: 25px;
 }
 
 #uiContainer {
-    width: 200px; /* Adjust width as needed */
-    padding: 15px;
-    border: 1px solid #eee;
-    background-color: #444; /* Slightly different background for UI */
-    color: #eee;
-    /* font-family: sans-serif; */ /* Inherit from body */
-    height: 608px; /* Match adjusted canvas height */
-    box-sizing: border-box; /* Include padding and border in the element's total width and height */
-    overflow-y: auto; /* Add scroll if content exceeds height */
+    width: 220px; /* Slightly wider */
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    height: 608px; /* Match canvas height */
+    box-sizing: border-box;
+    overflow-y: auto;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
+    font-size: 13px; /* Adjust UI font size */
+}
+
+#uiContainer p {
+    margin: 8px 0;
+    color: var(--text-secondary);
+}
+#uiContainer p:first-child { margin-top: 0; }
+#uiContainer hr {
+    border: none;
+    border-top: 1px solid var(--border-color);
+    margin: 15px 0;
+}
+#uiContainer button#logoutBtn { /* Style logout specifically */
+    width: 100%;
+    padding: 10px;
+    margin-top: 15px;
+    background-color: var(--error-color);
+    color: white;
+    border: none;
+    border-radius: var(--border-radius);
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s ease;
+}
+#uiContainer button#logoutBtn:hover {
+    background-color: #d32f2f; /* Darker red on hover */
 }
 
 /* --- Modal Styles --- */
 .modal {
-    display: none; /* Hidden by default */
-    position: fixed; /* Stay in place */
-    z-index: 1; /* Sit on top */
+    display: none;
+    position: fixed;
+    z-index: 100; /* High z-index */
     left: 0;
     top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
+    backdrop-filter: blur(3px); /* Optional blur effect */
 }
 
 .modal-content {
-    background-color: #444;
-    color: #eee;
-    margin: 15% auto; /* 15% from the top and centered */
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%; /* Could be more specific */
-    max-width: 400px;
-    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    margin: 10% auto; /* Adjust vertical margin */
+    padding: 25px 30px;
+    border: 1px solid var(--border-color);
+    width: 90%;
+    max-width: 450px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--box-shadow);
     text-align: center;
+}
+.modal-content h2 {
+    color: var(--accent-primary);
+    margin-bottom: 20px;
 }
 
 .stat-line {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin: 10px 0;
-    padding: 5px;
-    border-bottom: 1px solid #666;
+    margin: 12px 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
 }
-
 .stat-line span {
-    flex-basis: 40%;
+    flex-basis: 35%;
     text-align: left;
+    color: var(--text-secondary);
 }
-.stat-line span:nth-child(2) { /* The stat value */
+.stat-line span:nth-child(2) { /* Value */
+    flex-basis: 20%;
     text-align: center;
-    font-weight: bold;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+.stat-line button {
+    flex-basis: 15%;
 }
 
 .modal-stat-button, #closeStatModalBtn {
-    padding: 5px 10px;
+    padding: 6px 12px;
     cursor: pointer;
-    background-color: #666;
-    border: 1px solid #888;
-    color: #eee;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 4px;
+    transition: background-color 0.2s ease;
 }
-
 .modal-stat-button:hover, #closeStatModalBtn:hover {
-    background-color: #777;
+    background-color: var(--accent-secondary);
+    color: var(--bg-primary);
+}
+#closeStatModalBtn {
+    margin-top: 20px;
+    background-color: var(--accent-primary);
+    color: var(--bg-primary);
+    font-weight: 600;
+}
+#closeStatModalBtn:hover {
+     background-color: #ffb700; /* Darker gold */
 }
 
 /* --- Dialogue Box Styles --- */
 .dialogue-box {
-    display: none; /* Hidden by default */
-    position: absolute; /* Position relative to game-container */
-    bottom: 20px; /* Position at the bottom */
-    left: 50%; /* Center horizontally */
+    display: none;
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
     transform: translateX(-50%);
-    width: 80%; /* Adjust width */
-    max-width: 600px;
-    background-color: rgba(0, 0, 0, 0.8); /* Dark semi-transparent background */
-    border: 2px solid #eee;
-    border-radius: 5px;
-    padding: 15px;
-    color: #eee;
-    z-index: 10; /* Ensure it's above the canvas */
+    width: 85%;
+    max-width: 700px;
+    background-color: rgba(26, 26, 46, 0.9); /* Darker, less transparent */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 20px;
+    color: var(--text-primary);
+    z-index: 10;
     box-sizing: border-box;
-    font-size: 12px; /* Slightly larger font for dialogue */
-    line-height: 1.4;
+    font-size: 15px;
+    line-height: 1.5;
+    box-shadow: var(--box-shadow);
 }
 
 .dialogue-speaker {
     font-weight: bold;
     margin-bottom: 10px;
-    color: #ffd700; /* Gold color for speaker name */
+    color: var(--accent-primary);
 }
 
 .dialogue-text {
-    margin-bottom: 10px;
+    margin-bottom: 15px;
 }
 
 .dialogue-prompt {
     display: block;
     text-align: right;
-    font-size: 10px;
-    color: #aaa;
+    font-size: 12px;
+    color: var(--text-secondary);
 }
 
 /* --- Inventory Screen Styles --- */
 .inventory-screen {
-    display: none; /* Hidden by default */
+    display: none;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 90%;
-    max-width: 900px; /* Increased max-width */
-    height: 85%;
-    max-height: 650px; /* Increased max-height */
-    background-color: rgba(40, 40, 60, 0.95); /* Darker blue/purple */
-    border: 3px solid #ccc;
-    border-radius: 8px;
-    padding: 20px;
-    color: #eee;
-    z-index: 20; /* Above dialogue box */
+    width: 95%;
+    max-width: 1000px; /* Wider */
+    height: 90%;
+    max-height: 700px; /* Taller */
+    background-color: rgba(30, 30, 50, 0.97); /* Slightly less transparent */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 25px;
+    color: var(--text-primary);
+    z-index: 20;
     box-sizing: border-box;
-    display: none; /* Ensure hidden by default */
-    flex-direction: column;
-    gap: 15px;
+    display: none; /* Ensure hidden */
+    /* Use Grid for overall layout */
+    display: grid;
+    grid-template-columns: 1fr 250px; /* Inventory/Equip | Details */
+    grid-template-rows: auto 1fr auto; /* Header | Content | Footer */
+    gap: 20px;
+    box-shadow: var(--box-shadow);
 }
 
-.inventory-screen h2, .inventory-screen h3 {
+.inventory-screen h2 { /* Main Title */
+    grid-column: 1 / -1; /* Span both columns */
     text-align: center;
-    margin-bottom: 10px;
-    color: #ffd700;
+    margin-bottom: 15px;
+    color: var(--accent-primary);
+    font-size: 1.5em;
 }
 
 .equipment-section {
-    border: 1px solid #888;
-    padding: 10px;
-    border-radius: 5px;
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    background-color: var(--bg-secondary);
 }
 
 .equip-slots {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); /* 3 columns for equip */
+    gap: 15px;
     margin-top: 10px;
 }
 
 .equip-slot {
-    border: 1px dashed #aaa;
-    width: 60px; /* Adjust size */
-    height: 80px; /* Adjust size */
+    border: 1px dashed var(--border-color);
+    min-height: 85px; /* Ensure space */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    padding: 5px;
-    background-color: rgba(0, 0, 0, 0.3);
-}
-
-.slot-label {
-    font-size: 8px; /* Smaller label */
-    color: #ccc;
-}
-
-.item-display {
-    width: 48px; /* Size for item image/icon */
-    height: 48px;
-    background-color: rgba(255, 255, 255, 0.1); /* Placeholder background */
-    border: 1px solid #666;
-    /* Item image/text will go here */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 8px; /* For item name if no image */
-    overflow: hidden;
+    padding: 8px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
     text-align: center;
 }
 
+.slot-label {
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+}
+
+.item-display { /* Used inside equip slots */
+    width: 50px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    overflow: hidden;
+    text-align: center;
+    border-radius: 4px;
+    color: var(--text-primary); /* Make text visible */
+}
+.item-display .inventory-item { /* Style item if it's inside */
+    border: none;
+    background: none;
+    width: 100%;
+    height: 100%;
+}
+
+
 .inventory-section {
-    border: 1px solid #888;
-    padding: 10px;
-    border-radius: 5px;
-    flex-grow: 1; /* Take remaining space */
+    grid-column: 1 / 2;
+    grid-row: 3 / 4; /* Below equipment */
+    border: 1px solid var(--border-color);
+    padding: 15px;
+    border-radius: var(--border-radius);
+    background-color: var(--bg-secondary);
     overflow-y: auto; /* Scroll if needed */
+    min-height: 200px; /* Ensure it has some height */
 }
 
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); /* Responsive grid */
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)); /* Slightly larger items */
+    gap: 12px;
     margin-top: 10px;
 }
 
 .inventory-item {
-    width: 50px;
-    height: 50px;
-    border: 1px solid #aaa;
-    background-color: rgba(0, 0, 0, 0.3);
-    position: relative; /* For quantity display */
+    width: 55px;
+    height: 55px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-tertiary);
+    position: relative;
     cursor: pointer;
-     /* Item image/text will go here */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 8px;
+    font-size: 11px;
     overflow: hidden;
     text-align: center;
+    border-radius: 4px;
+    transition: transform 0.1s ease, border-color 0.2s ease;
+    color: var(--text-primary);
 }
 
 .inventory-item:hover {
-    border-color: #fff;
-    background-color: rgba(0, 0, 0, 0.5);
+    border-color: var(--accent-secondary);
+    transform: scale(1.05);
 }
 
 .item-quantity {
     position: absolute;
-    bottom: 2px;
-    right: 2px;
-    background-color: rgba(0, 0, 0, 0.7);
+    bottom: 3px;
+    right: 3px;
+    background-color: rgba(0, 0, 0, 0.8);
     color: #fff;
-    font-size: 9px;
-    padding: 1px 3px;
+    font-size: 10px;
+    padding: 2px 4px;
     border-radius: 3px;
 }
 
-#closeInventoryBtn {
-    margin-top: 10px;
-    padding: 8px 15px;
-    cursor: pointer;
-    background-color: #666;
-    border: 1px solid #888;
-    color: #eee;
-    align-self: center; /* Center the button */
-}
-
-#closeInventoryBtn:hover {
-    background-color: #777;
-}
-
 .item-details-section {
-    border: 1px solid #888;
-    padding: 10px;
-    border-radius: 5px;
-    margin-top: 10px; /* Space above details */
-    min-height: 100px; /* Ensure some space */
+    grid-column: 2 / 3; /* Right column */
+    grid-row: 2 / 4; /* Span equipment and inventory rows */
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    border-radius: var(--border-radius);
+    background-color: var(--bg-secondary);
     text-align: center;
+    display: flex;
+    flex-direction: column;
+}
+.item-details-section h3 {
+    color: var(--accent-primary);
+    margin-bottom: 15px;
 }
 
 #selectedItemStats, #selectedItemUpgradeInfo {
-    margin: 8px 0;
-    font-size: 10px;
-    color: #ccc;
+    margin: 10px 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-align: left; /* Align details left */
+    line-height: 1.7;
+}
+#selectedItemStats span, #selectedItemUpgradeInfo span {
+    color: var(--text-primary); /* Make values stand out */
+    font-weight: 600;
 }
 
+
 #upgradeItemBtn {
-    padding: 5px 10px;
+    padding: 10px 15px;
     cursor: pointer;
-    background-color: #4CAF50; /* Green */
-    border: 1px solid #388E3C;
+    background-color: var(--success-color);
+    border: none;
     color: white;
-    margin-top: 5px;
+    border-radius: 4px;
+    margin-top: auto; /* Push to bottom */
+    font-weight: 600;
+    transition: background-color 0.2s ease;
 }
 
 #upgradeItemBtn:disabled {
-    background-color: #666;
-    border-color: #888;
-    color: #aaa;
+    background-color: #555;
+    color: #999;
     cursor: not-allowed;
 }
 
 #upgradeItemBtn:not(:disabled):hover {
-    background-color: #45a049;
+    background-color: #388E3C; /* Darker green */
 }
+
+#closeInventoryBtn {
+    grid-column: 1 / -1; /* Span both columns */
+    grid-row: 4 / 5; /* Bottom row */
+    margin-top: 15px;
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 4px;
+    justify-self: center; /* Center button */
+    transition: background-color 0.2s ease;
+}
+#closeInventoryBtn:hover {
+    background-color: var(--accent-secondary);
+    color: var(--bg-primary);
+}
+
 
 /* Style for selected item in grid */
 .inventory-item.selected {
-    border-color: #ffd700; /* Gold border */
-    box-shadow: 0 0 5px #ffd700;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 8px var(--accent-primary);
+    transform: scale(1.05);
 }
 
 /* --- Authentication Form Styles --- */
@@ -313,53 +435,68 @@ h1 {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    background-color: rgba(40, 40, 60, 0.95);
-    border: 3px solid #ccc;
-    border-radius: 8px;
-    padding: 20px;
-    color: #eee;
-    z-index: 30; /* Above everything else */
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 30px 40px;
+    color: var(--text-primary);
+    z-index: 30;
     width: 90%;
     max-width: 400px;
     text-align: center;
+    box-shadow: var(--box-shadow);
 }
 
 .auth-form {
-    display: block; /* Initially show register form */
+    display: block;
     margin-bottom: 15px;
 }
 
 .auth-form h2 {
-    margin-bottom: 20px;
-    color: #ffd700;
+    margin-bottom: 25px;
+    color: var(--accent-primary);
+    font-size: 1.4em;
 }
 
 .auth-form input {
-    width: 90%;
-    padding: 8px;
-    margin-bottom: 10px;
-    border: 1px solid #888;
+    width: 100%; /* Full width */
+    box-sizing: border-box; /* Include padding in width */
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid var(--border-color);
     border-radius: 4px;
-    background-color: #333;
-    color: #eee;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 1em;
 }
 
 .auth-form button {
-    padding: 8px 15px;
+    width: 100%;
+    padding: 12px 15px;
     cursor: pointer;
-    background-color: #4CAF50; /* Green */
-    border: 1px solid #388E3C;
-    color: white;
+    background-color: var(--accent-secondary);
+    border: none;
+    color: var(--bg-primary);
     border-radius: 4px;
+    font-weight: 600;
+    font-size: 1em;
+    transition: background-color 0.2s ease;
 }
 
 .auth-form button:hover {
-    background-color: #45a049;
+    background-color: #4fc3f7; /* Lighter blue */
+}
+
+.auth-form p {
+    margin-top: 20px;
+    font-size: 0.9em;
+    color: var(--text-secondary);
 }
 
 .auth-form a {
-    color: #bbb;
+    color: var(--accent-secondary);
     text-decoration: none;
+    font-weight: 600;
 }
 
 .auth-form a:hover {
@@ -367,7 +504,8 @@ h1 {
 }
 
 .auth-message {
-    margin-top: 10px;
-    color: #f44336; /* Reddish for errors */
-    font-size: 12px;
+    margin-top: 15px;
+    color: var(--error-color);
+    font-size: 0.9em;
+    min-height: 1.2em; /* Reserve space */
 }
