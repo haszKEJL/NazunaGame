@@ -49,6 +49,8 @@ let currentCombatEnemy = null;
 let keysPressed = {}; // Input state - Primarily for movement and combat actions held down
 let currentDialogueNpc = null;
 let currentDialogueIndex = 0;
+let lastMoveTime = 0; // Track the time of the last successful move or attempt
+const MOVE_COOLDOWN = 150; // Milliseconds between moves
 
 // --- Camera State ---
 let cameraX = 0;
@@ -310,7 +312,9 @@ function update() {
             attemptedMove = true;
         }
 
-        if (attemptedMove) {
+        // Check movement cooldown *before* calculating target coordinates
+        const now = Date.now();
+        if (attemptedMove && (now - lastMoveTime > MOVE_COOLDOWN)) {
             // Calculate target pixel coordinates
             targetX = player.x + moveX;
             targetY = player.y + moveY;
@@ -361,7 +365,8 @@ function update() {
                 clearNpcs();
                 spawnEnemiesForMap(getCurrentMapId()); // Use the *new* currentMapId
                 spawnNpcsForMap(getCurrentMapId());
-                moved = true; // Count map change as a move
+                    moved = true; // Count map change as a move
+                    lastMoveTime = now; // Update last move time on successful transition
             } else {
                 // No map transition, check for combat/NPC/walkable
                 const enemyAtTarget = enemies.find(e => Math.floor(e.x / TILE_SIZE) === targetTileX && Math.floor(e.y / TILE_SIZE) === targetTileY);
@@ -372,24 +377,28 @@ function update() {
                     gameState = 'combat';
                     startCombat(enemyAtTarget);
                     moved = true; // Bump counts as move/action
+                    lastMoveTime = now; // Update last move time on starting combat
                     keysPressed = {}; // Clear movement keys on combat start
                 } else if (npcAtTarget) {
                      // Bumped into NPC, counts as an action but no movement
                      console.log(`Bumped into ${npcAtTarget.name}`);
-                     // Interaction is handled by Space/Enter keyup, not bump
                      moved = true; // Still counts as a turn
+                     lastMoveTime = now; // Update last move time even on NPC bump
                      // Don't clear keysPressed here, interaction needs Space/Enter keyup
                 } else if (isWalkable(targetTileX, targetTileY, getCurrentMap(), getMapCols(), getMapRows())) {
                     player.x = targetX;
                     player.y = targetY;
                     moved = true;
+                    lastMoveTime = now; // Update last move time on successful move
                 } else {
                     // Bumped into wall
                     moved = true; // Still counts as a turn
+                    lastMoveTime = now; // Update last move time on wall bump
                     // Don't clear keysPressed here, allows holding direction against wall
                 }
             }
-        }
+        } // End of cooldown check block
+        // Removed duplicated block here
 
         // Clear movement keys ONLY if combat starts
         // Let keyup handle removing keys for normal movement stop
@@ -472,19 +481,19 @@ function draw() {
 
     // --- Draw based on Game State ---
     // Always draw the world first (map, entities) using camera offset
-    ctx.save(); // Restore camera
+  //  ctx.save(); // Restore camera
     // Log camera and player positions before drawing world
-    console.log(`Drawing world with camera: (${cameraX}, ${cameraY}), player: (${player.x}, ${player.y})`); // UNCOMMENTED
-    ctx.translate(-cameraX, -cameraY); // Restore camera
-    console.log("Calling drawMap..."); // UNCOMMENTED
-    drawMap(ctx);
-    console.log("Calling drawEnemies..."); // UNCOMMENTED
-    drawEnemies(ctx);
-    console.log("Calling drawNpcs..."); // UNCOMMENTED
-    drawNpcs(ctx); // Draw NPCs
-    console.log("Calling drawPlayer..."); // UNCOMMENTED
-    drawPlayer(ctx);
-    ctx.restore(); // Restore camera
+ //   console.log(`Drawing world with camera: (${cameraX}, ${cameraY}), player: (${player.x}, ${player.y})`); // UNCOMMENTED
+ //   ctx.translate(-cameraX, -cameraY); // Restore camera
+  //  console.log("Calling drawMap..."); // UNCOMMENTED
+  //  drawMap(ctx);
+  //  console.log("Calling drawEnemies..."); // UNCOMMENTED
+  //  drawEnemies(ctx);
+  //  console.log("Calling drawNpcs..."); // UNCOMMENTED
+  //  drawNpcs(ctx); // Draw NPCs
+  //  console.log("Calling drawPlayer..."); // UNCOMMENTED
+  //  drawPlayer(ctx);
+  //  ctx.restore(); // Restore camera
 
     // Overlay screens based on state (Combat, Dialogue/Inventory are HTML, Trade later)
     if (gameState === 'combat') {
