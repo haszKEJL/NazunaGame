@@ -126,6 +126,7 @@ function updateInventoryUI() {
     player.inventory.forEach((item, index) => {
         const itemDiv = createItemDiv(item, index); // Pass inventory index
         inventoryGrid.appendChild(itemDiv);
+        console.log(`UI: Added item '${item.name}' to inventory grid at index ${index}`);
     });
 }
 

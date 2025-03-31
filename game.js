@@ -484,13 +484,13 @@ function draw() {
 
     // --- Draw based on Game State ---
     // Always draw the world first (map, entities) using camera offset
-        ctx.save(); // Restore camera
-        ctx.translate(-cameraX, -cameraY); // Restore camera
-        drawMap(ctx);
-        drawEnemies(ctx);
-        drawNpcs(ctx); // Draw NPCs
-        drawPlayer(ctx);
-        ctx.restore(); // Restore camera
+    ctx.save(); // Save camera state
+    ctx.translate(-cameraX, -cameraY); // Apply camera translation
+    drawMap(ctx);
+    drawEnemies(ctx);
+    drawNpcs(ctx); // Draw NPCs
+    drawPlayer(ctx);
+    ctx.restore(); // Restore camera state
 
     // Overlay screens based on state (Combat, Dialogue/Inventory are HTML, Trade later)
     if (gameState === 'combat') {
