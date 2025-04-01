@@ -227,8 +227,8 @@ h1 {
     z-index: 20;
     box-sizing: border-box;
     display: none; /* Ensure hidden */
-    /* Use Grid for overall layout */
-    display: grid;
+    /* Use Grid for overall layout - display property set by JS (flex) */
+    /* display: grid; */ /* REMOVED - This was overriding display: none */
     grid-template-columns: 1fr 250px; /* Inventory/Equip | Details */
     grid-template-rows: auto 1fr auto; /* Header | Content | Footer */
     gap: 20px;
@@ -252,16 +252,24 @@ h1 {
     background-color: var(--bg-secondary);
 }
 
-.equip-slots {
+/* Remove old flexbox style */
+/* .equip-slots { ... } */
+
+/* New Grid Container for Equipment */
+.equip-grid-container {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* 3 columns for equip */
+    grid-template-columns: repeat(4, 80px); /* 4 columns, fixed size */
+    grid-template-rows: repeat(3, 90px);    /* 3 rows, fixed size */
     gap: 15px;
+    justify-content: center; /* Center the grid */
+    align-content: center;   /* Center the grid items vertically */
     margin-top: 10px;
+    padding: 10px; /* Add some padding around the grid */
 }
 
-.equip-slot {
+.equip-grid-slot {
     border: 1px dashed var(--border-color);
-    min-height: 85px; /* Ensure space */
+    /* min-height: 85px; Remove fixed min-height, rely on grid row size */
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -380,17 +388,52 @@ h1 {
     font-weight: 600;
 }
 
+/* Container for item action buttons */
+.item-actions {
+    display: flex;
+    gap: 10px; /* Space between buttons */
+    margin-top: auto; /* Push container to bottom */
+    justify-content: center; /* Center buttons horizontally */
+    width: 100%; /* Ensure container takes full width */
+}
 
+/* Shared styles for action buttons */
+#equipItemBtn,
 #upgradeItemBtn {
     padding: 10px 15px;
     cursor: pointer;
-    background-color: var(--success-color);
     border: none;
     color: white;
     border-radius: 4px;
-    margin-top: auto; /* Push to bottom */
     font-weight: 600;
     transition: background-color 0.2s ease;
+    flex-grow: 1; /* Allow buttons to share space */
+}
+
+/* Specific button colors */
+#equipItemBtn {
+    background-color: var(--accent-secondary); /* Blue */
+    color: var(--bg-primary);
+}
+#upgradeItemBtn {
+    background-color: var(--success-color); /* Green */
+    /* margin-top: auto; REMOVED - Handled by container */
+}
+
+/* Disabled state for both buttons */
+#equipItemBtn:disabled,
+#upgradeItemBtn:disabled {
+    background-color: #555;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* Hover states for enabled buttons */
+#equipItemBtn:not(:disabled):hover {
+    background-color: #4fc3f7; /* Lighter blue */
+}
+#upgradeItemBtn:not(:disabled):hover {
+    background-color: #388E3C; /* Darker green */
 }
 
 #upgradeItemBtn:disabled {

@@ -354,11 +354,11 @@ export function upgradeInventoryItem(itemIndex) {
         return false;
     }
 
-    // Check if max level reached
-    if (item.upgradeLevel >= item.maxUpgradeLevel) {
-        console.log(`Upgrade failed: ${item.name} is already at max level (${item.maxUpgradeLevel}).`);
-        return false;
-    }
+    // Check if max level reached - REMOVED FOR INFINITE UPGRADES
+    // if (item.upgradeLevel >= item.maxUpgradeLevel) {
+    //     console.log(`Upgrade failed: ${item.name} is already at max level (${item.maxUpgradeLevel}).`);
+    //     return false;
+    // }
 
     // Check cost
     const cost = calculateUpgradeCost(item);

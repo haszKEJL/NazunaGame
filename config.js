@@ -19,6 +19,11 @@ export const TILE_ROAD = 5;
 export const TILE_BUILDING = 6;
 export const TILE_DOOR = 7; // Tile representing an entrance/exit within the city
 export const TILE_DUNGEON_ENTRANCE = 8; // Tile representing a dungeon entrance on the world map
+// Biome Tiles
+export const TILE_FOREST = 9;
+export const TILE_MOUNTAIN = 10;
+export const TILE_DESERT = 11;
+export const TILE_SWAMP = 12;
 
 // Combat Constants
 export const BASE_HIT_CHANCE = 0.85; // 85% base chance to hit

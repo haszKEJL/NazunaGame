@@ -1,7 +1,9 @@
-import { TILE_SIZE, TILE_FLOOR } from './config.js';
+// Import necessary tile types and player object
+import { TILE_SIZE, TILE_FLOOR, TILE_GRASS, TILE_FOREST, TILE_MOUNTAIN, TILE_DESERT, TILE_SWAMP } from './config.js';
 import { enemySprites, areAssetsLoaded } from './assets.js';
-import { isWalkable, getTileAt } from './utils.js'; // Need getTileAt for random placement check
+import { isWalkable, getTileAt } from './utils.js';
 import { getCurrentMap, getMapCols, getMapRows } from './map.js';
+import { player } from './player.js'; // Import player object
 
 // Enemies array
 export let enemies = [];
@@ -109,15 +111,77 @@ export function spawnEnemiesForMap(mapId) {
     const mapRows = getMapRows();
     let spawnCount = 0;
     let enemyConfig = [];
+    let levelRange = { min: 1, max: 3 }; // Default level range
 
     switch (mapId) {
         case 'world':
-            spawnCount = 5; // Example: Max 5 enemies on world map
-            enemyConfig = [
-                { type: 'slime', weight: 5 }, // Higher chance for slime
-                { type: 'skeleton', weight: 2 },
-            ];
-            break;
+            // Determine biome based on player location
+            const playerTileX = Math.floor(player.x / TILE_SIZE);
+            const playerTileY = Math.floor(player.y / TILE_SIZE);
+            const currentTileType = getTileAt(playerTileX, playerTileY, currentMap); // Use currentMap data
+
+            console.log(`Spawning for world map. Player at (${playerTileX}, ${playerTileY}), TileType: ${currentTileType}`);
+
+            switch (currentTileType) {
+                case TILE_GRASS: // Zone 1: Grass (Levels 1-4)
+                    spawnCount = 8;
+                    levelRange = { min: 1, max: 4 };
+                    enemyConfig = [
+                        { type: 'slime', weight: 6 },
+                        { type: 'cultist', weight: 2 }, // Early cultists
+                    ];
+                    console.log("Biome: Grass");
+                    break;
+                case TILE_FOREST: // Zone 2: Forest (Levels 3-6)
+                    spawnCount = 10;
+                     levelRange = { min: 3, max: 6 };
+                    enemyConfig = [
+                        { type: 'slime', weight: 3 },
+                        { type: 'skeleton', weight: 4 },
+                        { type: 'cultist', weight: 3 },
+                    ];
+                     console.log("Biome: Forest");
+                    break;
+                case TILE_MOUNTAIN: // Zone 3: Mountain (Levels 5-8)
+                    spawnCount = 12;
+                     levelRange = { min: 5, max: 8 };
+                    enemyConfig = [
+                        { type: 'skeleton', weight: 5 },
+                        { type: 'demon', weight: 2 }, // Introduce demons
+                        { type: 'cultist', weight: 1 }, // Fewer cultists
+                    ];
+                     console.log("Biome: Mountain");
+                    break;
+                case TILE_DESERT: // Zone 4: Desert (Levels 7-10)
+                    spawnCount = 10;
+                     levelRange = { min: 7, max: 10 };
+                    enemyConfig = [
+                        { type: 'skeleton', weight: 3 }, // Tougher skeletons
+                        { type: 'demon', weight: 4 },
+                        // Add desert-specific enemy type later?
+                    ];
+                     console.log("Biome: Desert");
+                    break;
+                 case TILE_SWAMP: // Zone 5: Swamp (Levels 9-12)
+                    spawnCount = 15;
+                     levelRange = { min: 9, max: 12 };
+                    enemyConfig = [
+                        { type: 'slime', weight: 2 }, // Stronger slimes?
+                        { type: 'demon', weight: 5 },
+                        { type: 'cultist', weight: 3 }, // Swamp cultists?
+                        // Add swamp-specific enemy type later?
+                    ];
+                     console.log("Biome: Swamp");
+                    break;
+                default: // Water, City Entrance etc. - No spawns or default grass?
+                    spawnCount = 5; // Default to grass spawns if on non-biome tile
+                     levelRange = { min: 1, max: 4 };
+                    enemyConfig = [ { type: 'slime', weight: 1 } ];
+                    console.log("Biome: Other (Defaulting to low-level Slime)");
+                    break;
+            }
+            break; // End of case 'world'
+
         case 'city':
             spawnCount = 0; // No enemies in city
             break;
@@ -167,11 +231,14 @@ export function spawnEnemiesForMap(mapId) {
         // Check if tile is walkable and not already occupied by another enemy
         if (isWalkable(x, y, currentMap, mapCols, mapRows) && !enemies.some(e => e.x === x && e.y === y)) {
             const enemyData = enemyTypes[chosenType];
-            // Determine random level within range
-            const level = Math.floor(Math.random() * (enemyData.maxLvl - enemyData.minLvl + 1)) + enemyData.minLvl;
+            // Determine random level within the ZONE's level range
+            const level = Math.floor(Math.random() * (levelRange.max - levelRange.min + 1)) + levelRange.min;
 
             const enemy = createEnemy(chosenType, x, y, level);
             if (enemy) {
+                // Optional: Check if the spawned enemy's tile matches the target biome?
+                // This prevents enemies spawning randomly across the whole map if desired.
+                // For now, allow random placement anywhere walkable.
                 enemies.push(enemy);
             }
         }

@@ -37,6 +37,7 @@ const selectedItemName = document.getElementById('selectedItemName');
 const selectedItemStats = document.getElementById('selectedItemStats');
 const selectedItemUpgradeInfo = document.getElementById('selectedItemUpgradeInfo');
 const upgradeItemBtn = document.getElementById('upgradeItemBtn');
+const equipItemBtn = document.getElementById('equipItemBtn'); // Added Equip button
 // Authentication Form Elements
 const authForms = document.getElementById('authForms'); // The container for both forms
 const registerForm = document.getElementById('registerForm');
@@ -51,8 +52,9 @@ const loginMessage = document.getElementById('loginMessage');
 // --- State for UI ---
 let selectedInventoryIndex = null; // Track selected item index
 
-// Check for essential elements (add new slots)
-if (!uiContainer || !gameContainer || !statModal || !modalContent || !closeModalBtn || !dialogueBox || !dialogueSpeaker || !dialogueText || !inventoryScreen || !equipSlotHelmet || !equipSlotNecklace || !equipSlotTalisman || !equipSlotWeapon || !equipSlotArmor || !equipSlotShield || !equipSlotRing1 || !equipSlotRing2 || !equipSlotBoots || !inventoryGrid || !closeInventoryBtn || !selectedItemName || !selectedItemStats || !selectedItemUpgradeInfo || !upgradeItemBtn || !authForms || !registerForm || !loginForm || !registerBtn || !loginBtn || !showLoginLink || !showRegisterLink || !registerMessage || !loginMessage) {
+// Check for essential elements (add new slots and buttons)
+// TODO: Add checks for ALL new equipSlot IDs from HTML
+if (!uiContainer || !gameContainer || !statModal || !modalContent || !closeModalBtn || !dialogueBox || !dialogueSpeaker || !dialogueText || !inventoryScreen || !inventoryGrid || !closeInventoryBtn || !selectedItemName || !selectedItemStats || !selectedItemUpgradeInfo || !upgradeItemBtn || !equipItemBtn || !authForms || !registerForm || !loginForm || !registerBtn || !loginBtn || !showLoginLink || !showRegisterLink || !registerMessage || !loginMessage) {
     console.error("CRITICAL: One or more essential UI elements are missing from index.html!");
 }
 
@@ -108,33 +110,49 @@ export function hideInventory() {
 
 // Function to update the inventory screen display
 function updateInventoryUI() {
-    // Add checks for new elements
-    if (!equipSlotHelmet || !equipSlotNecklace || !equipSlotTalisman || !equipSlotWeapon || !equipSlotArmor || !equipSlotShield || !equipSlotRing1 || !equipSlotRing2 || !equipSlotBoots || !inventoryGrid) return;
+    // Get all new slot elements (add more as needed based on HTML)
+    const equipSlots = {
+        special1: document.getElementById('equipSlotSpecial1'),
+        head: document.getElementById('equipSlotHead'),
+        portrait: document.getElementById('equipSlotPortrait'),
+        body: document.getElementById('equipSlotBody'),
+        weapon: document.getElementById('equipSlotWeapon'),
+        armor: document.getElementById('equipSlotArmor'),
+        ranged: document.getElementById('equipSlotRanged'),
+        mount: document.getElementById('equipSlotMount'),
+        belt: document.getElementById('equipSlotBelt'),
+        special2: document.getElementById('equipSlotSpecial2'),
+        legs: document.getElementById('equipSlotLegs'),
+        feet: document.getElementById('equipSlotFeet')
+        // Add other slots like necklace, rings, talisman if they exist in player.equipment
+    };
+
+    if (!inventoryGrid) return; // Basic check
 
     // Clear previous content for all slots
-    equipSlotHelmet.innerHTML = '';
-    equipSlotNecklace.innerHTML = '';
-    equipSlotTalisman.innerHTML = '';
-    equipSlotWeapon.innerHTML = '';
-    equipSlotArmor.innerHTML = '';
-    equipSlotShield.innerHTML = '';
-    equipSlotRing1.innerHTML = '';
-    equipSlotRing2.innerHTML = '';
-    equipSlotBoots.innerHTML = '';
+    for (const slotName in equipSlots) {
+        const slotElement = equipSlots[slotName];
+        if (slotElement) {
+            slotElement.innerHTML = '';
+        } else {
+            // console.warn(`UI: Equip slot element '${slotName}' not found.`); // Reduce noise
+        }
+    }
     inventoryGrid.innerHTML = '';
     selectedInventoryIndex = null; // Reset selection on UI update
     updateSelectedItemDetails(null); // Clear details pane
 
     // Populate Equipment Slots (Iterate through player equipment)
-    for (const slot in player.equipment) {
-        const item = player.equipment[slot];
+    console.log("UI: Populating equipment slots. Player equipment:", JSON.stringify(player.equipment));
+    for (const slotName in player.equipment) {
+        const item = player.equipment[slotName];
         if (item) {
-            const itemDiv = createItemDiv(item, slot); // Pass slot name
-            const slotElement = document.getElementById(`equipSlot${slot.charAt(0).toUpperCase() + slot.slice(1)}`);
+            const itemDiv = createItemDiv(item, slotName); // Pass slot name
+            const slotElement = equipSlots[slotName]; // Use the fetched element
             if (slotElement) {
                 slotElement.appendChild(itemDiv);
             } else {
-                console.warn(`UI: Could not find slot element for '${slot}'`);
+                console.warn(`UI: Could not find slot element for '${slotName}' in equipSlots map.`);
             }
         }
     }
@@ -154,7 +172,8 @@ function updateInventoryUI() {
 
 // Function to update the item details pane
 function updateSelectedItemDetails(itemIndex) {
-     if (!selectedItemName || !selectedItemStats || !selectedItemUpgradeInfo || !upgradeItemBtn) return;
+     // Add equipItemBtn check
+     if (!selectedItemName || !selectedItemStats || !selectedItemUpgradeInfo || !upgradeItemBtn || !equipItemBtn) return;
 
      // Clear previous selection highlight
      document.querySelectorAll('.inventory-item.selected').forEach(el => el.classList.remove('selected'));
@@ -165,6 +184,7 @@ function updateSelectedItemDetails(itemIndex) {
          selectedItemStats.innerHTML = '';
          selectedItemUpgradeInfo.innerHTML = '';
          upgradeItemBtn.disabled = true;
+         equipItemBtn.disabled = true; // Disable equip button too
          return;
      }
 
@@ -193,21 +213,22 @@ function updateSelectedItemDetails(itemIndex) {
      // Display upgrade info
      let upgradeHTML = '';
      let canUpgrade = false;
-     if (typeof item.upgradeLevel !== 'undefined' && item.maxUpgradeLevel) {
-         if (item.upgradeLevel < item.maxUpgradeLevel) {
-             const cost = calculateUpgradeCost(item); // Use helper from player.js? No, calculate here or get from player.js
-             // Re-implement cost calculation here for UI display (or import if needed)
-             const displayCost = Math.floor((item.baseValue || 0) * Math.pow(2, item.upgradeLevel));
-             upgradeHTML = `Level: ${item.upgradeLevel}/${item.maxUpgradeLevel}<br>Upgrade Cost: ${displayCost} Gold`;
-             canUpgrade = player.gold >= displayCost;
-         } else {
-             upgradeHTML = `Level: ${item.upgradeLevel}/${item.maxUpgradeLevel} (MAX)`;
-         }
+     // Check if item is upgradable (has level and base value)
+     if (typeof item.upgradeLevel !== 'undefined' && item.baseValue) {
+         const cost = calculateUpgradeCost(item);
+         const displayCost = Math.floor((item.baseValue || 0) * Math.pow(2, item.upgradeLevel));
+         // Display current level and cost, no max level shown
+         upgradeHTML = `Level: ${item.upgradeLevel}<br>Upgrade Cost: ${displayCost} Gold`;
+         canUpgrade = player.gold >= displayCost;
      } else {
+         // Item doesn't have upgradeLevel or baseValue defined
          upgradeHTML = '<span>Not Upgradable</span>';
      }
      selectedItemUpgradeInfo.innerHTML = upgradeHTML;
      upgradeItemBtn.disabled = !canUpgrade;
+
+     // Enable/disable Equip button based on item type
+     equipItemBtn.disabled = !item || !item.equipSlot; // Disable if no item or item not equippable
 
 }
 
@@ -328,7 +349,7 @@ export function updateUI() {
         <hr>
         <p>Potions (H): ${potionCount}</p>
         ${equipmentHTML} <!-- Display all equipment -->
-        <p>(E to Equip)</p>
+        <!-- <p>(E to Equip)</p> REMOVED -->
         <p>(Tab for Inv)</p> <!-- Added hint for inventory -->
         <button id="logoutBtn">Logout</button> <!-- Logout Button -->
     `;
@@ -429,11 +450,30 @@ function setupListeners() {
              });
          }
 
+         // Equip button listener
+         if (equipItemBtn) {
+             equipItemBtn.addEventListener('click', () => {
+                 if (selectedInventoryIndex !== null && !equipItemBtn.disabled) {
+                     console.log(`UI: Equip button clicked for index: ${selectedInventoryIndex}`);
+                     const success = equipItem(selectedInventoryIndex); // Call function from player.js
+                     if (success) {
+                         // Refresh UI after successful equip
+                         updateInventoryUI(); // This will re-render grid/slots and clear selection
+                         updateUI(); // Update main panel (stats, equip display)
+                         // No need to re-select, details pane is cleared by updateInventoryUI
+                     } else {
+                         // Maybe show an error message?
+                         console.log("UI: Equip failed (likely incompatible slot or other issue).");
+                     }
+                 }
+             });
+         }
+
          // Upgrade button listener
          if (upgradeItemBtn) {
              upgradeItemBtn.addEventListener('click', () => {
                  if (selectedInventoryIndex !== null && !upgradeItemBtn.disabled) {
-                     console.log(`Attempting to upgrade item at index: ${selectedInventoryIndex}`);
+                     console.log(`UI: Attempting to upgrade item at index: ${selectedInventoryIndex}`);
                      const success = upgradeInventoryItem(selectedInventoryIndex); // Call function from player.js
                      if (success) {
                          // Refresh UI after successful upgrade
@@ -452,7 +492,7 @@ function setupListeners() {
 
         console.log("Inventory listeners attached.");
     } else {
-         console.error("Cannot setup inventory listeners - elements missing.");
+         console.error("Cannot setup inventory listeners - elements missing (check equip/upgrade buttons).");
     }
 } // End of setupListeners function
 
@@ -463,4 +503,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // REMOVED checkAuthState() call - auth.js handles initial UI state.
     // Initial UI render (might show default values briefly before auth completes)
     updateUI();
+    // Ensure inventory is hidden initially (CSS should handle this, but belt-and-suspenders)
+    hideInventory();
 });

@@ -145,8 +145,9 @@ function handleKeyUp(e) {
     else if (gameState === 'overworld') {
         if (e.key === 'h' || e.key === 'H') {
             useItem('Health Potion');
-        } else if (e.key === 'e' || e.key === 'E') {
-            equipFirstAvailableItem();
+        // REMOVED 'E' key binding for equip
+        // } else if (e.key === 'e' || e.key === 'E') {
+        //     equipFirstAvailableItem();
         } else if (e.key === ' ' || e.key === 'Enter') {
             attemptInteraction();
         } else if (e.key === 'p' || e.key === 'P') {
@@ -346,9 +347,29 @@ function update() {
             } else if (currentMapId === 'dungeon') {
                 // TODO: Add logic to exit dungeon later, potentially finding the entrance tile
                 // if (targetTileType === TILE_FLOOR && targetTileX === 1 && targetTileY === 0) { // Example exit condition
-                //     newMapId = 'world';
-                //     newPlayerCoords = getDefaultStartCoords(newMapId); // Place near dungeon entrance on world map
-                // }
+                // Check for dungeon exit at specific coordinates (12, 1)
+                if (targetTileX === 12 && targetTileY === 1) {
+                    console.log("Player reached dungeon exit tile (12, 1).");
+                    newMapId = 'world';
+                    // Find dungeon entrance on world map to place player nearby
+                    const worldMapData = largeWorldMap; // Need access to the world map definition
+                    let entranceCoords = null;
+                    for (let y = 0; y < worldMapData.length; y++) {
+                        const x = worldMapData[y].indexOf(TILE_DUNGEON_ENTRANCE);
+                        if (x !== -1) {
+                            entranceCoords = { x, y };
+                            break;
+                        }
+                    }
+                    if (entranceCoords) {
+                        // Place player one tile below the entrance
+                        newPlayerCoords = { x: entranceCoords.x * TILE_SIZE, y: (entranceCoords.y + 1) * TILE_SIZE };
+                        console.log(`Found dungeon entrance at (${entranceCoords.x}, ${entranceCoords.y}). Placing player at (${newPlayerCoords.x}, ${newPlayerCoords.y})`);
+                    } else {
+                        console.warn("Could not find dungeon entrance on world map! Using default world start.");
+                        newPlayerCoords = getDefaultStartCoords(newMapId); // Fallback
+                    }
+                }
             }
 
             // If a transition was triggered, update player coords and change map

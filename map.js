@@ -1,15 +1,18 @@
+// Import new biome tiles
 import {
     TILE_SIZE, TILE_FLOOR, TILE_WALL, TILE_GRASS, TILE_WATER,
-    TILE_CITY_ENTRANCE, TILE_ROAD, TILE_BUILDING, TILE_DOOR, TILE_DUNGEON_ENTRANCE // Added dungeon entrance
+    TILE_CITY_ENTRANCE, TILE_ROAD, TILE_BUILDING, TILE_DOOR, TILE_DUNGEON_ENTRANCE,
+    TILE_FOREST, TILE_MOUNTAIN, TILE_DESERT, TILE_SWAMP // Added biome tiles
 } from './config.js';
 // import { tileset, areAssetsLoaded } from './assets.js'; // No longer needed for drawing map
 
 // --- Map Definitions ---
 const dungeonMap = [ // 25x19
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1],
+    [WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL], // Row 0
+    [WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL], // Row 1 (Exit at [1][12] - marked by comment below)
+    //                                            ^-- Dungeon Exit Tile (12, 1)
+    [WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL], // Row 2
+    [WL, FL, WL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, WL, FL, WL], // Row 3
     [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1],
     [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1],
     [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
@@ -28,32 +31,72 @@ const dungeonMap = [ // 25x19
 ];
 
 // World Map - Expanded to 25x19
-const G = TILE_GRASS; // Alias for readability
-const W = TILE_WATER;
-const C = TILE_CITY_ENTRANCE;
-const D = TILE_DUNGEON_ENTRANCE;
+// --- Define Tile Aliases ---
+const FL = TILE_FLOOR;
+const WL = TILE_WALL;
+const GR = TILE_GRASS;
+const WT = TILE_WATER;
+const CE = TILE_CITY_ENTRANCE;
+const RD = TILE_ROAD;
+const BL = TILE_BUILDING;
+const DR = TILE_DOOR;
+const DE = TILE_DUNGEON_ENTRANCE;
+const FO = TILE_FOREST;
+const MT = TILE_MOUNTAIN;
+const DS = TILE_DESERT;
+const SW = TILE_SWAMP;
 
-// Example Large World Map (50x50) - Procedural generation would be better for 128x128
+
+// --- Define Large World Map (64x64) with Biomes ---
+const WORLD_MAP_SIZE = 64;
 const largeWorldMap = [];
-const WORLD_MAP_SIZE = 50;
+
+// Simple biome layout: Grass center, Forest N, Desert E, Swamp S, Mountain W
+const centerSize = 20; // Size of central grass area
+const startX = Math.floor((WORLD_MAP_SIZE - centerSize) / 2);
+const startY = Math.floor((WORLD_MAP_SIZE - centerSize) / 2);
+const endX = startX + centerSize;
+const endY = startY + centerSize;
+
 for (let y = 0; y < WORLD_MAP_SIZE; y++) {
     largeWorldMap[y] = [];
     for (let x = 0; x < WORLD_MAP_SIZE; x++) {
-        if (x === 0 || x === WORLD_MAP_SIZE - 1 || y === 0 || y === WORLD_MAP_SIZE - 1) {
-            largeWorldMap[y][x] = G; // Water border
-        } else {
-            largeWorldMap[y][x] = G; // Grass interior
+        if (x < startX) { // West: Mountain
+            largeWorldMap[y][x] = MT;
+        } else if (x >= endX) { // East: Desert
+            largeWorldMap[y][x] = DS;
+        } else if (y < startY) { // North: Forest
+            largeWorldMap[y][x] = FO;
+        } else if (y >= endY) { // South: Swamp
+            largeWorldMap[y][x] = SW;
+        } else { // Center: Grass
+            largeWorldMap[y][x] = GR;
         }
     }
 }
-// Place City and Dungeon entrances somewhere
-largeWorldMap[10][15] = C; // City at (15, 10)
-largeWorldMap[25][30] = D; // Dungeon at (30, 25)
 
-// Keep original smaller maps for now
-const worldMap_UNUSED = [ // 25x19 - No longer used directly, replaced by largeWorldMap
-    [W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
+// Add some water features (example: a river)
+for (let y = 0; y < WORLD_MAP_SIZE; y++) {
+    if (y > 5 && y < WORLD_MAP_SIZE - 5) { // Avoid edges
+        largeWorldMap[y][Math.floor(WORLD_MAP_SIZE * 0.6)] = WT; // Vertical river part
+        largeWorldMap[y][Math.floor(WORLD_MAP_SIZE * 0.6) + 1] = WT;
+    }
+}
+for (let x = Math.floor(WORLD_MAP_SIZE * 0.6); x < WORLD_MAP_SIZE - 10; x++) {
+     largeWorldMap[Math.floor(WORLD_MAP_SIZE * 0.4)][x] = WT; // Horizontal river part
+     largeWorldMap[Math.floor(WORLD_MAP_SIZE * 0.4)+1][x] = WT;
+}
+
+
+// Place City and Dungeon entrances in specific biomes
+largeWorldMap[startY + 5][startX + 10] = CE; // City in Grass
+largeWorldMap[10][10] = DE; // Dungeon in Mountains (NW)
+
+
+// --- Original Small Maps (Keep for reference or specific areas) ---
+const worldMap_UNUSED = [ // 25x19 - No longer used directly
+    [WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT],
+    [WT, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, WT],
     [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
     [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
     [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
@@ -84,13 +127,22 @@ const cityMap = [ // 20x11 - Stays the same size
     [6, 5, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 5, 6],
     [6, 5, 6, 7, 6, 5, 6, 7, 6, 7, 6, 7, 6, 5, 6, 7, 6, 6, 5, 6],
     [6, 5, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 5, 6],
-    [6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6],
-    [6, 6, 6, 6, 6, 6, 6, 6, 6, 7, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6], // Exit Door (Tile 7) at the bottom
+    [BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL],
+    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL],
+    [BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL],
+    [BL, RD, BL, DR, BL, RD, BL, DR, BL, RD, BL, DR, BL, RD, BL, DR, BL, BL, RD, BL],
+    [BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL],
+    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL],
+    [BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL],
+    [BL, RD, BL, DR, BL, RD, BL, DR, BL, DR, BL, DR, BL, RD, BL, DR, BL, BL, RD, BL],
+    [BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL],
+    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL],
+    [BL, BL, BL, BL, BL, BL, BL, BL, BL, DR, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL], // Exit Door (Tile 7) at the bottom
 ];
 
 // --- Current Map State ---
 let currentMapId = 'world'; // Start on the large world map
-let currentMapData = largeWorldMap; // Use the large map
+let currentMapData = largeWorldMap; // Use the large map by default
 let worldMapPlayerStart = { x: undefined, y: undefined }; // Store where player was on world map
 
 export function getCurrentMap() {
@@ -109,44 +161,32 @@ export function getDefaultStartCoords(mapId) {
     switch (mapId) {
         case 'world':
             mapData = largeWorldMap;
-            // Fallback: Find the city entrance tile (or default if none)
-            let entranceFound = false;
-            for (let y = 0; y < mapData.length; y++) {
-                let x = mapData[y].indexOf(TILE_CITY_ENTRANCE);
-                if (x !== -1) {
-                    startTileX = x;
-                    startTileY = y + 1; // Place below city
-                    entranceFound = true;
-                    break;
-                }
-                x = mapData[y].indexOf(TILE_DUNGEON_ENTRANCE);
-                 if (x !== -1) {
-                    startTileX = x;
-                    startTileY = y + 1; // Place below dungeon
-                    entranceFound = true;
-                    break;
-                }
-             }
-             if (!entranceFound) { startTileX = 10; startTileY = 10; } // Default start pos on large map
+            // Find the city entrance tile on the large map
+            let cityEntranceCoords = findTileCoords(mapData, TILE_CITY_ENTRANCE);
+            if (cityEntranceCoords) {
+                startTileX = cityEntranceCoords.x;
+                startTileY = cityEntranceCoords.y + 1; // Place below city entrance
+            } else {
+                startTileX = Math.floor(WORLD_MAP_SIZE / 2); // Fallback to center
+                startTileY = Math.floor(WORLD_MAP_SIZE / 2);
+            }
             break;
         case 'city':
             mapData = cityMap;
-            // Find the bottom exit door to place the player near it when entering from world
-             let cityExitFound = false;
-             for (let y = mapData.length - 1; y >= 0; y--) {
-                const x = mapData[y].indexOf(TILE_DOOR);
-                if (x !== -1 && y === mapData.length - 1) { // Ensure it's the bottom door
-                    startTileX = x;
-                    startTileY = y - 1; // Place above the door
-                    cityExitFound = true;
-                    break;
-                }
-            }
-             if (!cityExitFound) { startTileX = 1; startTileY = 1; } // Fallback
+            // Find the bottom exit door
+            let cityExitCoords = findTileCoords(mapData, TILE_DOOR, true); // Search from bottom
+             if (cityExitCoords) {
+                 startTileX = cityExitCoords.x;
+                 startTileY = cityExitCoords.y - 1; // Place above the door
+             } else {
+                 startTileX = 1; startTileY = 1; // Fallback
+             }
             break;
         case 'dungeon':
             mapData = dungeonMap;
-            startTileX = 1; // Default start for dungeon (top-left corner inside walls)
+            // Find the entrance tile (assuming it's defined, e.g., TILE_FLOOR at a specific spot)
+            // For now, use default top-left start
+            startTileX = 1;
             startTileY = 1;
             break;
         default:
@@ -155,6 +195,31 @@ export function getDefaultStartCoords(mapId) {
             break;
     }
     return { x: startTileX * TILE_SIZE, y: startTileY * TILE_SIZE };
+}
+
+// Helper function to find the first occurrence of a tile type
+function findTileCoords(mapData, tileType, searchFromBottom = false) {
+    const rows = mapData.length;
+    const cols = mapData[0] ? mapData[0].length : 0;
+
+    if (searchFromBottom) {
+        for (let y = rows - 1; y >= 0; y--) {
+            for (let x = 0; x < cols; x++) {
+                if (mapData[y][x] === tileType) {
+                    return { x, y };
+                }
+            }
+        }
+    } else {
+        for (let y = 0; y < rows; y++) {
+            for (let x = 0; x < cols; x++) {
+                if (mapData[y][x] === tileType) {
+                    return { x, y };
+                }
+            }
+        }
+    }
+    return null; // Not found
 }
 
 
@@ -240,6 +305,19 @@ export function drawMap(ctx) {
                         break;
                     case TILE_DUNGEON_ENTRANCE:
                         tileColor = '#8A2BE2'; // BlueViolet for dungeon entrance
+                        break;
+                    // Add new biome colors
+                    case TILE_FOREST:
+                        tileColor = '#006400'; // DarkGreen for forest
+                        break;
+                    case TILE_MOUNTAIN:
+                        tileColor = '#808080'; // Grey for mountain
+                        break;
+                    case TILE_DESERT:
+                        tileColor = '#F4A460'; // SandyBrown for desert
+                        break;
+                    case TILE_SWAMP:
+                        tileColor = '#556B2F'; // DarkOliveGreen for swamp
                         break;
                     default:
                         tileColor = '#FF00FF'; // Magenta for unknown/error

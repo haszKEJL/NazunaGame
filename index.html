@@ -26,43 +26,59 @@
     <div id="inventoryScreen" class="inventory-screen">
         <h2>Inventory & Equipment</h2>
         <div class="equipment-section">
-            <h3>Equipment</h3>
-            <div class="equip-slots">
-                <div class="equip-slot" data-slot="helmet">
-                    <span class="slot-label">Helmet</span>
-                    <div id="equipSlotHelmet" class="item-display"></div>
+            <h3>Wyposażenie</h3> <!-- Changed Title -->
+            <!-- Updated 3x4 Grid Layout for Equipment -->
+            <div class="equip-grid-container">
+                <!-- Row 1 -->
+                <div class="equip-grid-slot" data-slot="special1">
+                    <span class="slot-label">Special 1</span> <!-- Placeholder: Whistle -->
+                    <div id="equipSlotSpecial1" class="item-display"></div>
                 </div>
-                <div class="equip-slot" data-slot="necklace">
-                    <span class="slot-label">Necklace</span>
-                    <div id="equipSlotNecklace" class="item-display"></div>
+                <div class="equip-grid-slot" data-slot="head">
+                    <span class="slot-label">Head</span> <!-- Placeholder: Hat -->
+                    <div id="equipSlotHead" class="item-display"></div>
                 </div>
-                 <div class="equip-slot" data-slot="talisman">
-                    <span class="slot-label">Talisman</span>
-                    <div id="equipSlotTalisman" class="item-display"></div>
+                <div class="equip-grid-slot" data-slot="portrait">
+                    <span class="slot-label">Portrait</span> <!-- Placeholder: Character -->
+                    <div id="equipSlotPortrait" class="item-display"></div>
                 </div>
-                <div class="equip-slot" data-slot="weapon">
-                    <span class="slot-label">Weapon</span>
+                 <div class="equip-grid-slot" data-slot="body">
+                    <span class="slot-label">Body</span> <!-- Placeholder: Jacket -->
+                    <div id="equipSlotBody" class="item-display"></div>
+                </div>
+                <!-- Row 2 -->
+                <div class="equip-grid-slot" data-slot="weapon">
+                    <span class="slot-label">Weapon</span> <!-- Placeholder: Sword -->
                     <div id="equipSlotWeapon" class="item-display"></div>
                 </div>
-                <div class="equip-slot" data-slot="armor">
-                    <span class="slot-label">Armor</span>
+                <div class="equip-grid-slot" data-slot="armor">
+                    <span class="slot-label">Armor</span> <!-- Placeholder: Shirt -->
                     <div id="equipSlotArmor" class="item-display"></div>
                 </div>
-                 <div class="equip-slot" data-slot="shield">
-                    <span class="slot-label">Shield</span>
-                    <div id="equipSlotShield" class="item-display"></div>
+                 <div class="equip-grid-slot" data-slot="ranged">
+                    <span class="slot-label">Ranged</span> <!-- Placeholder: Rifle -->
+                    <div id="equipSlotRanged" class="item-display"></div>
                 </div>
-                 <div class="equip-slot" data-slot="ring1">
-                    <span class="slot-label">Ring 1</span>
-                    <div id="equipSlotRing1" class="item-display"></div>
+                 <div class="equip-grid-slot" data-slot="mount">
+                    <span class="slot-label">Mount</span> <!-- Placeholder: Camel -->
+                    <div id="equipSlotMount" class="item-display"></div>
                 </div>
-                 <div class="equip-slot" data-slot="ring2">
-                    <span class="slot-label">Ring 2</span>
-                    <div id="equipSlotRing2" class="item-display"></div>
+                <!-- Row 3 -->
+                 <div class="equip-grid-slot" data-slot="belt">
+                    <span class="slot-label">Belt</span> <!-- Placeholder: Belt -->
+                    <div id="equipSlotBelt" class="item-display"></div>
                 </div>
-                 <div class="equip-slot" data-slot="boots">
-                    <span class="slot-label">Boots</span>
-                    <div id="equipSlotBoots" class="item-display"></div>
+                 <div class="equip-grid-slot" data-slot="special2">
+                    <span class="slot-label">Special 2</span> <!-- Placeholder: Ball -->
+                    <div id="equipSlotSpecial2" class="item-display"></div>
+                </div>
+                 <div class="equip-grid-slot" data-slot="legs">
+                    <span class="slot-label">Legs</span> <!-- Placeholder: Shorts -->
+                    <div id="equipSlotLegs" class="item-display"></div>
+                </div>
+                 <div class="equip-grid-slot" data-slot="feet">
+                    <span class="slot-label">Feet</span> <!-- Placeholder: Shoes -->
+                    <div id="equipSlotFeet" class="item-display"></div>
                 </div>
             </div>
         </div>
@@ -77,7 +93,10 @@
             <h3 id="selectedItemName">Select an Item</h3>
             <div id="selectedItemStats"></div>
             <div id="selectedItemUpgradeInfo"></div>
-            <button id="upgradeItemBtn" disabled>Upgrade</button>
+            <div class="item-actions"> <!-- Added container for buttons -->
+                <button id="equipItemBtn" disabled>Equip</button>
+                <button id="upgradeItemBtn" disabled>Upgrade</button>
+            </div>
         </div>
         <button id="closeInventoryBtn">Close (Tab)</button>
     </div>
