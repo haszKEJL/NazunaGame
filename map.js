@@ -6,32 +6,7 @@ import {
 } from './config.js';
 // import { tileset, areAssetsLoaded } from './assets.js'; // No longer needed for drawing map
 
-// --- Map Definitions ---
-const dungeonMap = [ // 25x19
-    [WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL], // Row 0
-    [WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL], // Row 1 (Exit at [1][12] - marked by comment below)
-    //                                            ^-- Dungeon Exit Tile (12, 1)
-    [WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL], // Row 2
-    [WL, FL, WL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, WL, FL, WL], // Row 3
-    [1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
-    [1, 0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1, 0, 1],
-    [1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
-    [1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
-    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-];
-
-// World Map - Expanded to 25x19
-// --- Define Tile Aliases ---
+// --- Define Tile Aliases (Define BEFORE use) ---
 const FL = TILE_FLOOR;
 const WL = TILE_WALL;
 const GR = TILE_GRASS;
@@ -46,7 +21,31 @@ const MT = TILE_MOUNTAIN;
 const DS = TILE_DESERT;
 const SW = TILE_SWAMP;
 
+// --- Map Definitions ---
+const dungeonMap = [ // 25x19 - Using Aliases
+    [WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL], // Row 0
+    [WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL], // Row 1 (Exit at [1][12])
+    //                                            ^-- Dungeon Exit Tile (12, 1)
+    [WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL], // Row 2
+    [WL, FL, WL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, WL, FL, WL], // Row 3
+    [WL, FL, WL, FL, WL, WL, WL, FL, WL, WL, WL, WL, WL, WL, WL, FL, WL, FL, WL, WL, WL, FL, WL, FL, WL], // Row 4
+    [WL, FL, FL, FL, WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL, FL, WL, FL, FL, FL, FL, FL, WL], // Row 5
+    [WL, FL, WL, FL, WL, FL, WL, WL, WL, WL, WL, FL, WL, WL, WL, WL, WL, FL, WL, FL, WL, WL, WL, FL, WL], // Row 6
+    [WL, FL, WL, FL, WL, FL, WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL, FL, WL, FL, FL, FL, WL, FL, WL], // Row 7
+    [WL, FL, WL, FL, WL, FL, WL, FL, WL, WL, WL, WL, WL, WL, WL, FL, WL, FL, WL, WL, WL, FL, WL, FL, WL], // Row 8
+    [WL, FL, FL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL], // Row 9
+    [WL, WL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, WL, WL, FL, WL, WL, WL, WL, WL], // Row 10
+    [WL, FL, FL, FL, FL, FL, WL, FL, FL, FL, WL, FL, FL, FL, WL, FL, FL, FL, WL, FL, FL, FL, FL, FL, WL], // Row 11
+    [WL, FL, WL, WL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL], // Row 12
+    [WL, FL, FL, FL, FL, FL, FL, FL, WL, FL, FL, FL, WL, FL, FL, FL, WL, FL, FL, FL, FL, FL, FL, FL, WL], // Row 13
+    [WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, FL, WL, FL, WL, WL, WL, FL, WL, WL, WL, WL, WL, FL, WL], // Row 14
+    [WL, FL, WL, FL, FL, FL, FL, FL, FL, FL, WL, FL, WL, FL, FL, FL, FL, FL, WL, FL, FL, FL, WL, FL, WL], // Row 15
+    [WL, FL, WL, FL, WL, WL, WL, WL, WL, WL, WL, FL, WL, WL, WL, WL, WL, WL, WL, FL, WL, FL, WL, FL, WL], // Row 16
+    [WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL, FL, FL, FL, WL], // Row 17
+    [WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL]  // Row 18
+];
 
+// World Map - Expanded to 64x64
 // --- Define Large World Map (64x64) with Biomes ---
 const WORLD_MAP_SIZE = 64;
 const largeWorldMap = [];
@@ -93,51 +92,19 @@ largeWorldMap[startY + 5][startX + 10] = CE; // City in Grass
 largeWorldMap[10][10] = DE; // Dungeon in Mountains (NW)
 
 
-// --- Original Small Maps (Keep for reference or specific areas) ---
-const worldMap_UNUSED = [ // 25x19 - No longer used directly
-    [WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT, WT],
-    [WT, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, GR, WT],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, G, G, G, G, G, G, G, G, G, C, G, G, G, G, G, G, G, G, G, G, G, G, G, W], // City Entrance (Tile 4)
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    // ... (rest of the old world map definition - commented out or removed) ...
-    // [W, G, G, G, G, G, G, G, D, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W], // Dungeon Entrance (Tile 8)
-    // ...
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, G, W],
-    [W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W, W],
-];
-
-
-const cityMap = [ // 20x11 - Stays the same size
-    [6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6],
-    [6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6],
-    [6, 5, 6, 6, 6, 5, 6, 6, 6, 5, 6, 6, 6, 5, 6, 6, 6, 6, 5, 6],
-    [6, 5, 6, 7, 6, 5, 6, 7, 6, 5, 6, 7, 6, 5, 6, 7, 6, 6, 5, 6],
-    [6, 5, 6, 6, 6, 5, 6, 6, 6, 5, 6, 6, 6, 5, 6, 6, 6, 6, 5, 6],
-    [6, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 6],
-    [6, 5, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 5, 6],
-    [6, 5, 6, 7, 6, 5, 6, 7, 6, 7, 6, 7, 6, 5, 6, 7, 6, 6, 5, 6],
-    [6, 5, 6, 6, 6, 5, 6, 6, 6, 6, 6, 6, 6, 5, 6, 6, 6, 6, 5, 6],
-    [BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL],
-    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL],
-    [BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL],
-    [BL, RD, BL, DR, BL, RD, BL, DR, BL, RD, BL, DR, BL, RD, BL, DR, BL, BL, RD, BL],
-    [BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL],
-    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL],
-    [BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL],
-    [BL, RD, BL, DR, BL, RD, BL, DR, BL, DR, BL, DR, BL, RD, BL, DR, BL, BL, RD, BL],
-    [BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL],
-    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL],
-    [BL, BL, BL, BL, BL, BL, BL, BL, BL, DR, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL], // Exit Door (Tile 7) at the bottom
+// --- City Map Definition ---
+const cityMap = [ // 20x11 - Using Aliases
+    [BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL], // Row 0
+    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL], // Row 1
+    [BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL], // Row 2
+    [BL, RD, BL, DR, BL, RD, BL, DR, BL, RD, BL, DR, BL, RD, BL, DR, BL, BL, RD, BL], // Row 3
+    [BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL], // Row 4
+    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL], // Row 5
+    [BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL], // Row 6
+    [BL, RD, BL, DR, BL, RD, BL, DR, BL, DR, BL, DR, BL, RD, BL, DR, BL, BL, RD, BL], // Row 7
+    [BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL], // Row 8
+    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL], // Row 9
+    [BL, BL, BL, BL, BL, BL, BL, BL, BL, DR, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL]  // Row 10 (Exit Door at [10][9])
 ];
 
 // --- Current Map State ---
