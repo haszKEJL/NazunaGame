@@ -123,58 +123,58 @@ function handleKeyDown(e) {
     }
 
     // Only add keys needed for continuous press checks (movement, maybe combat actions)
-    if (gameState === 'overworld' && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-         console.log(`[DEBUG] Adding key to keysPressed: ${e.key}`); // ADDED LOG
-         keysPressed[e.key] = true;
-    } else if (gameState === 'combat' && ['a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
+    // Convert WASD to lowercase for consistent checking
+    const key = e.key.toLowerCase();
+    if (gameState === 'overworld' && ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
+         // console.log(`[DEBUG] Adding key to keysPressed: ${key}`); // Reduce noise
+         keysPressed[key] = true;
+    } else if (gameState === 'combat' && ['a', 'i', 'f'].includes(key)) { // Check lowercase combat keys
          // Add combat keys to check in updateCombat if needed, though keyup might be sufficient
          keysPressed[e.key] = true;
     }
 }
 
 function handleKeyUp(e) {
-    // console.log(`[DEBUG] Keyup detected on window: ${e.key}, Current gameState: ${gameState}`); // Less verbose log
+    // Convert key to lowercase for consistent checking
+    const key = e.key.toLowerCase();
+    // console.log(`[DEBUG] Keyup detected on window: ${key}, Current gameState: ${gameState}`); // Less verbose log
 
     // --- Inventory Toggle (Simplified) ---
-    if (e.key === 'Tab' || (gameState === 'inventory' && e.key === 'Escape')) {
+    if (key === 'tab' || (gameState === 'inventory' && key === 'escape')) {
         console.log("[DEBUG] Toggling inventory via Tab/Escape."); // DIAGNOSTIC LOG
         e.preventDefault();
         toggleInventoryScreen();
     }
     // --- Other Single-Press Actions based on State ---
     else if (gameState === 'overworld') {
-        if (e.key === 'h' || e.key === 'H') {
+        if (key === 'h') { // Check lowercase 'h'
             useItem('Health Potion');
         // REMOVED 'E' key binding for equip
-        // } else if (e.key === 'e' || e.key === 'E') {
-        //     equipFirstAvailableItem();
-        } else if (e.key === ' ' || e.key === 'Enter') {
+        } else if (key === ' ' || key === 'enter') { // Check lowercase 'enter'
             attemptInteraction();
-        } else if (e.key === 'p' || e.key === 'P') {
+        } else if (key === 'p') { // Check lowercase 'p'
             if (player.statPoints > 0) {
-                openStatModal(); // TODO: Consider pausing game state here
+                openStatModal();
             } else {
                 console.log("No stat points to allocate.");
             }
-        }
+         }
     } else if (gameState === 'dialogue') {
-         if (e.key === ' ' || e.key === 'Enter') {
+         if (key === ' ' || key === 'enter') { // Check lowercase
              advanceDialogue();
          }
-    } else if (gameState === 'combat') {
-         // Combat actions are processed in updateCombat based on keysPressed
-         // We just need to remove the key from keysPressed now that it's released
-         if (['a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
-             delete keysPressed[e.key];
-         }
     }
+    // Combat keyup is handled below
 
     // --- Clear specific key on keyup ---
-    // This handles removing movement keys when released
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
-         delete keysPressed[e.key];
+    // This handles removing movement and combat action keys when released
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'i', 'f'].includes(key)) {
+         delete keysPressed[key];
     }
-    // We don't need the general clear anymore as keyup handles specific keys.
+    // Special case for combat 'a' (attack) - might need different handling if actions are queued
+    if (gameState === 'combat' && key === 'a') {
+        delete keysPressed[key];
+    }
     // if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
     //     delete keysPressed[e.key];
     // }
@@ -294,19 +294,20 @@ function update() {
         let moveX = 0;
         let moveY = 0;
 
-        if (keysPressed['ArrowUp']) {
+        // Check WASD first, then Arrows as fallback/alternative
+        if (keysPressed['w'] || keysPressed['arrowup']) {
             moveY = -TILE_SIZE;
             player.sprite = playerSprites.back;
             attemptedMove = true;
-        } else if (keysPressed['ArrowDown']) {
+        } else if (keysPressed['s'] || keysPressed['arrowdown']) {
             moveY = TILE_SIZE;
             player.sprite = playerSprites.front;
             attemptedMove = true;
-        } else if (keysPressed['ArrowLeft']) {
+        } else if (keysPressed['a'] || keysPressed['arrowleft']) {
             moveX = -TILE_SIZE;
             player.sprite = playerSprites.left;
             attemptedMove = true;
-        } else if (keysPressed['ArrowRight']) {
+        } else if (keysPressed['d'] || keysPressed['arrowright']) {
             moveX = TILE_SIZE;
             player.sprite = playerSprites.right;
             attemptedMove = true;
@@ -464,18 +465,17 @@ function updateCombat() {
         return; // Stop further combat processing
     }
 
-    // Handle Player Input for Combat Actions
+    // Handle Player Input for Combat Actions (Check lowercase keys)
     let playerAction = null;
-    // Check keysPressed for combat actions
-    if (keysPressed['a'] || keysPressed['A']) {
+    if (keysPressed['a']) {
         playerAction = 'attack';
-        delete keysPressed['a']; delete keysPressed['A']; // Consume key
-    } else if (keysPressed['i'] || keysPressed['I']) {
+        delete keysPressed['a']; // Consume key
+    } else if (keysPressed['i']) {
         playerAction = 'item'; // Placeholder for Item
-        delete keysPressed['i']; delete keysPressed['I']; // Consume key
-    } else if (keysPressed['f'] || keysPressed['F']) {
+        delete keysPressed['i']; // Consume key
+    } else if (keysPressed['f']) {
         playerAction = 'flee'; // Placeholder for Flee
-        delete keysPressed['f']; delete keysPressed['F']; // Consume key
+        delete keysPressed['f']; // Consume key
     }
     // Add more actions later (Defend?)
 
