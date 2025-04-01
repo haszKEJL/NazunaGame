@@ -672,6 +672,7 @@ function gameLoop() {
 
 // --- Start Game Logic ---
 function attemptGameInitialization() {
+    console.log(`[DEBUG] attemptGameInitialization called. assetsAreLoaded=${assetsAreLoaded}, playerDataInitialized=${playerDataInitialized}`); // ADDED LOG
     if (assetsAreLoaded && playerDataInitialized) {
         console.log("Assets loaded and player data initialized. Starting game.");
         initializeGame(); // Initialize game only after both are ready
@@ -685,7 +686,7 @@ console.log("Waiting for assets...");
 onAssetsLoaded(() => {
     console.log("Assets finished loading.");
     assetsAreLoaded = true;
-    attemptGameInitialization();
+    attemptGameInitialization(); // Try to initialize after assets load
 });
 
 // Listen for the player data ready event from auth.js
@@ -696,21 +697,27 @@ document.addEventListener('playerDataReady', () => {
         const storedData = localStorage.getItem('initialPlayerData');
         if (storedData) {
             const initialData = JSON.parse(storedData);
-            console.log("Initializing player from stored data:", initialData);
+            console.log("[DEBUG] Calling initializePlayerFromData with stored data..."); // ADDED LOG
             initializePlayerFromData(initialData); // Use the imported function
+            console.log("[DEBUG] initializePlayerFromData finished."); // ADDED LOG
             localStorage.removeItem('initialPlayerData'); // Clean up storage
         } else {
             console.log("No initial player data found in storage, using defaults.");
-            // initializePlayerFromData should handle null/undefined gracefully or
-            // initializePlayerStats() might be called within initializeGame if needed.
+            console.log("[DEBUG] Calling initializePlayerFromData with null..."); // ADDED LOG
             initializePlayerFromData(null); // Explicitly pass null
+            console.log("[DEBUG] initializePlayerFromData finished (with null)."); // ADDED LOG
         }
         playerDataInitialized = true;
+        console.log("[DEBUG] playerDataInitialized set to true."); // ADDED LOG
     } catch (error) {
         console.error("Error processing initial player data:", error);
-        // Handle error, maybe proceed with defaults
+        // Handle error, maybe proceed with defaults? Or halt?
+        // For now, let's still try to initialize to see if defaults work
+        console.log("[DEBUG] Error occurred, calling initializePlayerFromData with null as fallback..."); // ADDED LOG
         initializePlayerFromData(null);
+        console.log("[DEBUG] initializePlayerFromData finished (after error)."); // ADDED LOG
         playerDataInitialized = true; // Mark as initialized even on error to proceed
+        console.log("[DEBUG] playerDataInitialized set to true (after error)."); // ADDED LOG
     }
-    attemptGameInitialization();
+    attemptGameInitialization(); // Try to initialize after player data is processed
 });

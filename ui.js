@@ -501,5 +501,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auth forms visibility is handled by auth.js
 });
 
-// Expose functions needed by other modules (like auth.js)
-export { showGameUI, showAuthForms, updateUI, addLogMessage }; // Added showAuthForms back, also exporting updateUI and addLogMessage as they are used elsewhere
+// Expose functions needed ONLY by auth.js initially.
+// Other functions like updateUI, addLogMessage, showDialogue etc. are already exported individually where they are defined.
+export { showGameUI, showAuthForms };
