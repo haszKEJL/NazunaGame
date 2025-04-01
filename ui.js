@@ -34,10 +34,10 @@ const equipSlots = {
     armor: document.getElementById('equipSlotArmor'),
     shield: document.getElementById('equipSlotShield'),
     boots: document.getElementById('equipSlotBoots'),
-    necklace: document.getElementById('equipSlotNecklace'),
+    necklace: document.getElementById('equipSlotNecklace'), // Keep necklace ID
     ring1: document.getElementById('equipSlotRing1'),
-    ring2: document.getElementById('equipSlotRing2')
-    // Add other slots if defined in HTML
+    ring2: document.getElementById('equipSlotRing2'),
+    talisman: document.getElementById('equipSlotTalisman') // Add talisman ID
 };
 // Item Details Elements
 const selectedItemName = document.getElementById('selectedItemName');

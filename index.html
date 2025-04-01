@@ -50,7 +50,7 @@
                 </div>
                 <div id="controls-panel" class="ui-panel">
                     <h3>Controls</h3>
-                    <p>Arrows: Move</p>
+                    <p>Arrows/WASD: Move</p> <!-- Updated controls text -->
                     <p>Space: Interact</p>
                     <p>Tab: Inventory</p>
                     <p>P: Allocate Stats</p>
@@ -60,9 +60,11 @@
 
         <!-- Dialogue Box (Overlay) -->
         <div id="dialogueBox" class="dialogue-box overlay">
-            <p id="dialogueSpeaker" class="dialogue-speaker"></p>
-            <p id="dialogueText" class="dialogue-text"></p>
-            <span class="dialogue-prompt">(Space/Enter)</span>
+             <div class="dialogue-content-wrapper"> <!-- Added wrapper for styling -->
+                <p id="dialogueSpeaker" class="dialogue-speaker"></p>
+                <p id="dialogueText" class="dialogue-text"></p>
+                <span class="dialogue-prompt">(Space/Enter)</span>
+            </div>
         </div>
 
         <!-- Inventory/Equipment Screen (Overlay) -->
@@ -72,17 +74,19 @@
                 <div class="inventory-main">
                     <div class="equipment-section">
                         <h3>Equipment</h3>
-                        <div class="equip-grid-container">
-                            <!-- Simplified Grid - Adjust slots as needed -->
-                            <div class="equip-grid-slot" data-slot="head"><span class="slot-label">Head</span><div id="equipSlotHead" class="item-display"></div></div>
-                            <div class="equip-grid-slot" data-slot="weapon"><span class="slot-label">Weapon</span><div id="equipSlotWeapon" class="item-display"></div></div>
-                            <div class="equip-grid-slot" data-slot="armor"><span class="slot-label">Armor</span><div id="equipSlotArmor" class="item-display"></div></div>
-                            <div class="equip-grid-slot" data-slot="shield"><span class="slot-label">Shield</span><div id="equipSlotShield" class="item-display"></div></div>
-                            <div class="equip-grid-slot" data-slot="boots"><span class="slot-label">Boots</span><div id="equipSlotBoots" class="item-display"></div></div>
-                            <div class="equip-grid-slot" data-slot="necklace"><span class="slot-label">Neck</span><div id="equipSlotNecklace" class="item-display"></div></div>
-                            <div class="equip-grid-slot" data-slot="ring1"><span class="slot-label">Ring 1</span><div id="equipSlotRing1" class="item-display"></div></div>
-                            <div class="equip-grid-slot" data-slot="ring2"><span class="slot-label">Ring 2</span><div id="equipSlotRing2" class="item-display"></div></div>
-                            <!-- Add other relevant slots -->
+                        <!-- Updated Grid Layout for Equipment using grid-area -->
+                        <div class="equip-grid-container character-layout">
+                            <!-- Assign grid-area names matching CSS -->
+                            <div class="equip-grid-slot" style="grid-area: head;"><span class="slot-label">Head</span><div id="equipSlotHead" class="item-display"></div></div>
+                            <div class="equip-grid-slot" style="grid-area: neck;"><span class="slot-label">Neck</span><div id="equipSlotNecklace" class="item-display"></div></div>
+                            <div class="equip-grid-slot" style="grid-area: talisman;"><span class="slot-label">Talisman</span><div id="equipSlotTalisman" class="item-display"></div></div>
+                            <div class="equip-grid-slot" style="grid-area: weapon;"><span class="slot-label">Weapon</span><div id="equipSlotWeapon" class="item-display"></div></div>
+                            <div class="equip-grid-slot" style="grid-area: armor;"><span class="slot-label">Armor</span><div id="equipSlotArmor" class="item-display"></div></div>
+                            <div class="equip-grid-slot" style="grid-area: shield;"><span class="slot-label">Shield</span><div id="equipSlotShield" class="item-display"></div></div>
+                            <div class="equip-grid-slot" style="grid-area: ring1;"><span class="slot-label">Ring 1</span><div id="equipSlotRing1" class="item-display"></div></div>
+                            <div class="equip-grid-slot" style="grid-area: boots;"><span class="slot-label">Boots</span><div id="equipSlotBoots" class="item-display"></div></div>
+                            <div class="equip-grid-slot" style="grid-area: ring2;"><span class="slot-label">Ring 2</span><div id="equipSlotRing2" class="item-display"></div></div>
+                            <!-- Removed helmet, added talisman, rearranged -->
                         </div>
                     </div>
                     <div class="inventory-section">
