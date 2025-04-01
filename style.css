@@ -74,9 +74,8 @@ a:hover {
     background-color: #2a2a3a; /* Slightly lighter dark background for wrapper */
     border-radius: 8px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-    position: relative; /* Needed for overlay positioning */
+    /* position: relative; */ /* REMOVED - Let game-area handle relative positioning */
     max-width: 900px; /* Limit overall width */
-    /* REMOVED height/overflow constraints from wrapper, let body handle scroll */
     box-sizing: border-box;
 }
 
@@ -84,6 +83,8 @@ a:hover {
     display: flex;
     flex-direction: column;
     align-items: center;
+    position: relative; /* Set game-area as the positioning context for overlays */
+    width: 100%; /* Ensure game-area takes available width */
 }
 
 #gameCanvas {
@@ -209,23 +210,32 @@ a:hover {
 
 /* --- Dialogue Box --- */
 .dialogue-box {
-    /* Uses .overlay styles, but positioned at bottom */
-    align-items: flex-end; /* Align content to bottom */
-    background: none; /* Transparent background for dialogue overlay */
-    pointer-events: none; /* Allow clicks through overlay */
+    /* Uses .overlay styles */
+    position: absolute; /* Position relative to game-area */
+    bottom: 145px; /* Position it above the estimated height of the UI panels + gap */
+    left: 50%; /* Center horizontally */
+    transform: translateX(-50%); /* Fine-tune centering */
+    width: 90%; /* Adjust width as needed */
+    max-width: 780px; /* Slightly less than canvas */
+    z-index: 15; /* Ensure it's above canvas but potentially below other modals */
+    display: none; /* Hidden by default */
+    /* Remove overlay background if positioning directly */
+    background-color: transparent;
+    padding: 0; /* Remove overlay padding */
+    justify-content: center; /* Center content */
+    align-items: center; /* Center content */
+    pointer-events: none; /* Allow clicks through overlay background */
 }
 
-.dialogue-box > div { /* Style the inner content box */
+.dialogue-content-wrapper { /* Style the actual visible box */
     background-color: rgba(42, 42, 58, 0.9); /* Dark semi-transparent */
     border: 2px solid #7a7a9e;
     border-radius: 5px;
     padding: 15px 20px;
-    width: 80%;
-    max-width: 760px; /* Slightly less than canvas */
-    margin-bottom: 20px; /* Position above bottom edge */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
     pointer-events: auto; /* Enable interaction with the box itself */
     color: #fff;
+    width: 100%; /* Take width defined by .dialogue-box */
 }
 
 .dialogue-speaker {

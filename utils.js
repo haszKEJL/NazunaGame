@@ -1,16 +1,12 @@
 import {
-    TILE_FLOOR, TILE_GRASS, TILE_ROAD, TILE_DOOR, TILE_CITY_ENTRANCE, TILE_STONE, // Added TILE_STONE
-    TILE_WALL, TILE_WATER, TILE_BUILDING // Import non-walkable for clarity if needed elsewhere
+    TILE_FLOOR, TILE_GRASS, TILE_ROAD, TILE_DOOR, TILE_CITY_ENTRANCE, TILE_STONE,
+    TILE_WALL, TILE_WATER, TILE_BUILDING, TILE_TREE, TILE_MOUNTAIN, TILE_FOREST, TILE_DESERT, TILE_SWAMP, TILE_DUNGEON_ENTRANCE // Import all tile types
 } from './config.js';
 
-// Define walkable tiles in a set for easy checking
-const walkableTiles = new Set([
-    TILE_FLOOR,         // Floor is walkable again
-    TILE_GRASS,         // Grass is walkable again
-    TILE_STONE,         // Stone is now walkable
-    TILE_ROAD,
-    TILE_DOOR,          // Doors are walkable (trigger transitions)
-    TILE_CITY_ENTRANCE // City entrances are walkable (trigger transitions)
+// No longer need a walkable set, define non-walkable instead
+const nonWalkableTiles = new Set([
+    TILE_WALL,
+    TILE_WATER
 ]);
 
 /**
@@ -35,8 +31,8 @@ export function isWalkable(x, y, mapData, mapCols, mapRows) {
     }
     const tileType = mapData[y][x];
 
-    // Check if the tile type is in the set of walkable tiles
-    return walkableTiles.has(tileType);
+    // Check if the tile type is NOT in the set of non-walkable tiles
+    return !nonWalkableTiles.has(tileType);
 }
 
 /**
