@@ -62,6 +62,7 @@ let cameraY = 0;
 let assetsAreLoaded = false;
 let playerDataInitialized = false;
 function initializeGame() {
+    console.log("[DEBUG] initializeGame: Function started."); // ADDED LOG
     // Initialize player's derived stats based on core stats BEFORE placing them
     // Initialize player's derived stats based on core stats
     // Note: initializePlayerFromData (called on login/refresh) already handles loading stats,
@@ -83,17 +84,28 @@ function initializeGame() {
         player.y = defaultCoords.y;
     }
 
-    console.log(`Initializing game. Setting map to: ${initialMapId}. Player start coords: (${player.x}, ${player.y})`);
-    changeMap(initialMapId); // Change map data *after* coords are set
+    console.log(`[DEBUG] initializeGame: Setting map to: ${initialMapId}. Player start coords: (${player.x}, ${player.y})`);
+    try {
+        changeMap(initialMapId); // Change map data *after* coords are set
+        console.log("[DEBUG] initializeGame: changeMap finished."); // ADDED LOG
 
-    // Spawn entities for the initial map (needs to happen *after* changeMap sets currentMapId)
-    spawnEnemiesForMap(getCurrentMapId()); // Spawn enemies for the current map
-    spawnNpcsForMap(getCurrentMapId()); // Spawn initial NPCs
-    setupInputHandlers();
-    canvas.focus(); // Explicitly focus the canvas
-    gameRunning = true;
-    console.log("Game initialized. Starting loop...");
-
+        // Spawn entities for the initial map (needs to happen *after* changeMap sets currentMapId)
+        spawnEnemiesForMap(getCurrentMapId()); // Spawn enemies for the current map
+        console.log("[DEBUG] initializeGame: spawnEnemiesForMap finished."); // ADDED LOG
+        spawnNpcsForMap(getCurrentMapId()); // Spawn initial NPCs
+        console.log("[DEBUG] initializeGame: spawnNpcsForMap finished."); // ADDED LOG
+        setupInputHandlers();
+        console.log("[DEBUG] initializeGame: setupInputHandlers finished."); // ADDED LOG
+        canvas.focus(); // Explicitly focus the canvas
+        console.log("[DEBUG] initializeGame: Canvas focused."); // ADDED LOG
+        gameRunning = true;
+        console.log("[DEBUG] initializeGame: gameRunning set to true."); // ADDED LOG
+        console.log("Game initialized. Starting loop...");
+    } catch (error) {
+        console.error("[CRITICAL] Error during initializeGame sequence:", error); // ADDED ERROR CATCH
+        // Optionally, display an error message to the user on the screen/UI
+        return; // Prevent starting the game loop if initialization failed critically
+    }
     // --- Setup Periodic Save ---
     const SAVE_INTERVAL = 60000; // 60 seconds
     setInterval(() => {
@@ -658,13 +670,28 @@ function drawCombatScreen() {
 
 
 function gameLoop() {
+    // console.log("[DEBUG] gameLoop tick."); // ADDED LOG (Can be noisy)
     // Add a check here too, just in case gameRunning is modified between frames somehow
     if (!gameRunning) {
         console.log("Game loop stopping: gameRunning became false.");
         return;
     }
-
-    update();
+    try {
+        update();
+    } catch (error) {
+        console.error("Error during game update:", error);
+        gameRunning = false; // Stop the loop on error
+        // Optionally display error to user
+        return;
+    }
+    try {
+        draw();
+    } catch (error) {
+        console.error("Error during game draw:", error);
+        gameRunning = false; // Stop the loop on error
+        // Optionally display error to user
+        return;
+    }
     draw();
 
     requestAnimationFrame(gameLoop); // Keep the loop running
