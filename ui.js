@@ -66,6 +66,33 @@ if (!playerStatsContent || !actionLogContent || !statModal || !dialogueBox || !i
 
 // --- UI Visibility Functions ---
 // These now control the overlays
+// Export functions needed by auth.js directly
+export function showGameUI() { // ADDED export keyword
+    // Find the game area element (assuming it exists)
+    const gameArea = document.querySelector('.game-area');
+    if (gameArea) {
+        gameArea.style.display = 'flex'; // Or 'block', depending on layout needs
+    }
+    // Hide auth forms
+    const authFormsContainer = document.getElementById('authForms');
+    if (authFormsContainer) {
+        authFormsContainer.style.display = 'none';
+    }
+}
+
+export function showAuthForms() { // ADDED export keyword
+    // Hide the game area
+    const gameArea = document.querySelector('.game-area');
+    if (gameArea) {
+        gameArea.style.display = 'none';
+    }
+    // Show auth forms
+    const authFormsContainer = document.getElementById('authForms');
+    if (authFormsContainer) {
+        authFormsContainer.style.display = 'flex'; // Use flex to center the forms container
+    }
+}
+
 function showOverlay(element) {
     if (element) {
         element.style.display = 'flex'; // Use flex for centering overlays
@@ -501,6 +528,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auth forms visibility is handled by auth.js
 });
 
-// Expose functions needed ONLY by auth.js initially.
-// Other functions like updateUI, addLogMessage, showDialogue etc. are already exported individually where they are defined.
-export { showGameUI, showAuthForms };
+// No longer need the final export block as functions are exported individually
