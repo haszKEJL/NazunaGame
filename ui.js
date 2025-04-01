@@ -346,11 +346,12 @@ export function updateUI() {
     if (!playerStatsContent || !actionLogContent) return; // Check if panels exist
 
     // --- Update Stats Panel ---
-    const statPointsHTML = player.statPoints > 0 ? ` <button id="openStatModalBtn" class="inline-button">(P) Allocate</button>` : '';
+    // Generate the button HTML conditionally
+    const statPointsButtonHTML = player.statPoints > 0 ? ` <button id="openStatModalBtn" class="inline-button">(P) Allocate</button>` : '';
     const statsHTML = `
         <p>HP: ${player.hp} / ${player.maxHp}</p>
         <p>Level: ${player.level} (XP: ${player.xp}/${player.xpToNextLevel})</p>
-        <p>Points: ${player.statPoints}${statPointsHTML}</p>
+        <p>Points: ${player.statPoints}${statPointsButtonHTML}</p> <!-- Use the generated button HTML -->
         <hr>
         <p>STR: ${player.strength} | DEX: ${player.dexterity} | CON: ${player.constitution}</p>
         <p>INT: ${player.intelligence} | AGI: ${player.agility}</p>
@@ -362,15 +363,7 @@ export function updateUI() {
     `;
     playerStatsContent.innerHTML = statsHTML;
 
-    // Re-attach listeners for buttons inside the panel
-    const openStatBtn = document.getElementById('openStatModalBtn');
-    if (openStatBtn) {
-        openStatBtn.addEventListener('click', openStatModal);
-    }
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', handleLogout); // Use separate handler
-    }
+    // REMOVE listener attachments from here - they will be handled by delegation in setupListeners
 
     // --- Update Log Panel (Example - Needs real log data) ---
     // For now, just keep the last message or add a new one
@@ -413,6 +406,26 @@ async function handleLogout() {
 
 // --- Event Listeners ---
 function setupListeners() {
+    // Get static parent elements for delegation
+    const statsPanel = document.getElementById('player-stats-panel');
+
+    // -- Stats Panel Button Listeners (Delegation) --
+    if (statsPanel) {
+        statsPanel.addEventListener('click', (event) => {
+            if (event.target.id === 'openStatModalBtn') {
+                console.log("Allocate button clicked (delegated).");
+                openStatModal();
+            } else if (event.target.id === 'logoutBtn') {
+                console.log("Logout button clicked (delegated).");
+                handleLogout();
+            }
+        });
+        console.log("Stats panel delegated listeners attached.");
+    } else {
+        console.error("Cannot setup Stats Panel listeners - panel element missing.");
+    }
+
+
     // -- Modal Listeners --
     if (statModalContent && closeStatModalBtn) {
         // Use event delegation on the content div for stat buttons

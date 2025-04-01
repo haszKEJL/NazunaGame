@@ -791,32 +791,32 @@ onAssetsLoaded(() => {
 // Listen for the player data ready event from auth.js
 console.log("Waiting for player data ready signal...");
 document.addEventListener('playerDataReady', () => {
-    console.log("Received playerDataReady event.");
+    // This event should now ONLY fire after successful auth in auth.js
+    console.log("Received playerDataReady event (implies successful auth).");
     try {
         const storedData = localStorage.getItem('initialPlayerData');
         if (storedData) {
             const initialData = JSON.parse(storedData);
-            console.log("[DEBUG] Calling initializePlayerFromData with stored data..."); // ADDED LOG
-            initializePlayerFromData(initialData); // Use the imported function
-            console.log("[DEBUG] initializePlayerFromData finished."); // ADDED LOG
+            console.log("[DEBUG] Calling initializePlayerFromData with stored data...");
+            initializePlayerFromData(initialData); // Initialize player with the data
+            console.log("[DEBUG] initializePlayerFromData finished.");
             localStorage.removeItem('initialPlayerData'); // Clean up storage
+            playerDataInitialized = true; // Set flag: Player data is ready
+            console.log("[DEBUG] playerDataInitialized set to true.");
         } else {
-            console.log("No initial player data found in storage, using defaults.");
-            console.log("[DEBUG] Calling initializePlayerFromData with null..."); // ADDED LOG
-            initializePlayerFromData(null); // Explicitly pass null
-            console.log("[DEBUG] initializePlayerFromData finished (with null)."); // ADDED LOG
+            // This case should ideally not happen if auth.js only dispatches on success
+            console.error("playerDataReady event received, but no initialPlayerData found in localStorage!");
+            // Handle this potential inconsistency? Maybe show auth forms again?
+            // For now, we won't set playerDataInitialized = true, preventing game start.
+             playerDataInitialized = false;
+             console.log("[DEBUG] playerDataInitialized set to false (missing stored data).");
         }
-        playerDataInitialized = true;
-        console.log("[DEBUG] playerDataInitialized set to true."); // ADDED LOG
     } catch (error) {
         console.error("Error processing initial player data:", error);
-        // Handle error, maybe proceed with defaults? Or halt?
-        // For now, let's still try to initialize to see if defaults work
-        console.log("[DEBUG] Error occurred, calling initializePlayerFromData with null as fallback..."); // ADDED LOG
-        initializePlayerFromData(null);
-        console.log("[DEBUG] initializePlayerFromData finished (after error)."); // ADDED LOG
-        playerDataInitialized = true; // Mark as initialized even on error to proceed
-        console.log("[DEBUG] playerDataInitialized set to true (after error)."); // ADDED LOG
+        // If there's an error processing valid data, prevent game start
+        playerDataInitialized = false;
+        console.log("[DEBUG] playerDataInitialized set to false (error during processing).");
+        // Optionally show an error message to the user
     }
-    attemptGameInitialization(); // Try to initialize after player data is processed
+    attemptGameInitialization(); // Try to initialize (will only succeed if assets are also loaded)
 });

@@ -135,13 +135,13 @@ async function fetchAndInitializePlayerData(token) {
             localStorage.removeItem('username');
             localStorage.removeItem('initialPlayerData'); // Clear stored data
             showAuthForms(); // Show login forms if token is invalid/expired
-            document.dispatchEvent(new CustomEvent('playerDataReady')); // Dispatch event (use defaults)
+            // DO NOT dispatch playerDataReady here - wait for successful login
         }
     } catch (error) {
         console.error("Network error while fetching user data:", error);
         localStorage.removeItem('initialPlayerData'); // Clear stored data
         showAuthForms(); // Show auth forms on network error
-        document.dispatchEvent(new CustomEvent('playerDataReady')); // Dispatch event (use defaults)
+        // DO NOT dispatch playerDataReady here - wait for successful login
     }
 }
 
@@ -201,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("No token found in localStorage. Showing auth forms.");
         localStorage.removeItem('initialPlayerData'); // Ensure no stale data
         showAuthForms(); // Show auth forms if no token
-        document.dispatchEvent(new CustomEvent('playerDataReady')); // Dispatch event (use defaults)
+        // DO NOT dispatch playerDataReady here - wait for successful login
     }
 });
 
