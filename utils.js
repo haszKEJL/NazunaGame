@@ -1,5 +1,5 @@
 import {
-    TILE_FLOOR, TILE_GRASS, TILE_ROAD, TILE_DOOR, TILE_CITY_ENTRANCE,
+    TILE_FLOOR, TILE_GRASS, TILE_ROAD, TILE_DOOR, TILE_CITY_ENTRANCE, TILE_STONE, // Added TILE_STONE
     TILE_WALL, TILE_WATER, TILE_BUILDING // Import non-walkable for clarity if needed elsewhere
 } from './config.js';
 
