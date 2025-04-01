@@ -96,8 +96,10 @@ a:hover {
 /* --- Main UI Panels (Below Canvas) --- */
 .main-ui-panels {
     display: flex;
-    justify-content: space-between;
-    width: 800px; /* Match canvas width */
+    flex-wrap: wrap; /* Allow panels to wrap */
+    justify-content: space-around; /* Distribute space */
+    width: 100%; /* Use full width of container */
+    max-width: 800px; /* Limit max width like canvas */
     gap: 15px;
 }
 
@@ -106,9 +108,11 @@ a:hover {
     border: 1px solid #5a5a6a;
     border-radius: 5px;
     padding: 10px 15px;
-    flex: 1; /* Panels share space equally */
-    min-height: 100px; /* Ensure panels have some height */
+    flex-grow: 1; /* Allow panels to grow */
+    flex-basis: 240px; /* Suggest a base width, allowing ~3 panels per row */
+    min-height: 120px; /* Slightly taller */
     box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+    box-sizing: border-box; /* Include padding/border in width */
 }
 
 .ui-panel h3 {
