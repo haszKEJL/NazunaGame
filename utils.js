@@ -61,4 +61,56 @@ export function getTileAt(x, y, mapData) {
     return mapData[y][x];
 }
 
+
+/**
+ * Finds the nearest walkable tile coordinates using Breadth-First Search.
+ * @param {number} startTileX - The starting X tile coordinate.
+ * @param {number} startTileY - The starting Y tile coordinate.
+ * @param {Array<Array<number>>} mapData - The map data array.
+ * @param {number} mapCols - Total columns in the map.
+ * @param {number} mapRows - Total rows in the map.
+ * @returns {{x: number, y: number} | null} Coordinates of the nearest walkable tile, or null if none found (shouldn't happen on valid maps).
+ */
+export function findNearestWalkableTile(startTileX, startTileY, mapData, mapCols, mapRows) {
+    const queue = [{ x: startTileX, y: startTileY }];
+    const visited = new Set([`${startTileX},${startTileY}`]);
+    const directions = [
+        { dx: 0, dy: -1 }, // Up
+        { dx: 0, dy: 1 },  // Down
+        { dx: -1, dy: 0 }, // Left
+        { dx: 1, dy: 0 }   // Right
+    ];
+
+    while (queue.length > 0) {
+        const current = queue.shift();
+
+        // Check if the current tile itself is walkable
+        if (isWalkable(current.x, current.y, mapData, mapCols, mapRows)) {
+            return { x: current.x, y: current.y };
+        }
+
+        // Explore neighbors
+        for (const dir of directions) {
+            const nextX = current.x + dir.dx;
+            const nextY = current.y + dir.dy;
+            const key = `${nextX},${nextY}`;
+
+            // Check bounds and if already visited
+            if (nextX >= 0 && nextX < mapCols && nextY >= 0 && nextY < mapRows && !visited.has(key)) {
+                 // Check if the neighbor is walkable (Optimization: Check here instead of adding all neighbors)
+                 if (isWalkable(nextX, nextY, mapData, mapCols, mapRows)) {
+                    return { x: nextX, y: nextY }; // Found the nearest walkable neighbor
+                 }
+                 // If neighbor is not walkable, add to queue to explore its neighbors later
+                 visited.add(key);
+                 queue.push({ x: nextX, y: nextY });
+            }
+        }
+    }
+
+    console.error(`findNearestWalkableTile: Could not find any walkable tile starting from (${startTileX}, ${startTileY}). This might indicate a map issue.`);
+    return null; // Should ideally not happen on a map with walkable areas
+}
+
+
 // Add other utility functions here later if needed

@@ -1,6 +1,6 @@
 import { TILE_SIZE, TILE_FLOOR, TILE_CITY_ENTRANCE, TILE_DOOR, TILE_DUNGEON_ENTRANCE } from './config.js'; // Added TILE_DUNGEON_ENTRANCE
 import { onAssetsLoaded, areAssetsLoaded, playerSprites } from './assets.js';
-import { isWalkable, getTileAt } from './utils.js';
+import { isWalkable, getTileAt, findNearestWalkableTile } from './utils.js'; // Added findNearestWalkableTile
 import {
     drawMap,
     getCurrentMap,
@@ -74,19 +74,56 @@ function initializeGame() {
 
     const initialMapId = player.loadedMapId || 'world'; // Use loaded map ID or default
 
-    // Ensure player coordinates are valid numbers before using them.
-    // If loaded data was invalid or missing, get defaults for the target map.
-    // Use TILE_SIZE check as a basic validation for pixel coords.
-    if (typeof player.x !== 'number' || typeof player.y !== 'number' || isNaN(player.x) || isNaN(player.y) || player.x < 0 || player.y < 0) {
-        console.warn(`Invalid or missing loaded coordinates (${player.x}, ${player.y}). Getting defaults for map ${initialMapId}.`);
-        const defaultCoords = getDefaultStartCoords(initialMapId);
+    // --- Set Player Coordinates ---
+    // 1. Get default coordinates for the target map first.
+    const defaultCoords = getDefaultStartCoords(initialMapId);
+    player.x = defaultCoords.x;
+    player.y = defaultCoords.y;
+    console.log(`[DEBUG] initializeGame: Initial default coordinates set to (${player.x}, ${player.y}) for map ${initialMapId}.`);
+
+    // 2. Try to overwrite with loaded coordinates ONLY if they are valid numbers.
+    //    (player.x and player.y might have been set to undefined or valid numbers by initializePlayerFromData)
+    const loadedX = player.x; // Temporarily store value potentially set by initializePlayerFromData
+    const loadedY = player.y;
+
+    if (typeof loadedX === 'number' && typeof loadedY === 'number' && !isNaN(loadedX) && !isNaN(loadedY) && loadedX >= 0 && loadedY >= 0) {
+        // If initializePlayerFromData set valid numbers, keep them.
+         console.log(`[DEBUG] initializeGame: Using valid loaded/existing coordinates (${loadedX}, ${loadedY})`);
+         // No change needed, player.x/y already hold the loaded values if they were valid
+    } else {
+        // If loaded coords were invalid (undefined, NaN, negative), stick with the defaults already set.
+        console.warn(`Invalid or missing loaded coordinates detected (${loadedX}, ${loadedY}). Using default coordinates (${player.x}, ${player.y}).`);
+        // Ensure player.x/y still hold the defaultCoords values set above.
         player.x = defaultCoords.x;
         player.y = defaultCoords.y;
     }
+    // --- End Set Player Coordinates ---
 
-    console.log(`[DEBUG] initializeGame: Setting map to: ${initialMapId}. Player start coords: (${player.x}, ${player.y})`);
+    console.log(`[DEBUG] initializeGame: Proceeding with map setup. Final player start coords: (${player.x}, ${player.y})`);
+
+    // --- Ensure Player Starts on Walkable Tile ---
+    const startTileX = Math.floor(player.x / TILE_SIZE);
+    const startTileY = Math.floor(player.y / TILE_SIZE);
+    const currentMap = getCurrentMap(); // Get map data *before* potentially changing it
+    const mapCols = getMapCols();
+    const mapRows = getMapRows();
+
+    if (!isWalkable(startTileX, startTileY, currentMap, mapCols, mapRows)) {
+        console.warn(`Player initial position (${startTileX}, ${startTileY}) is not walkable. Finding nearest walkable tile...`);
+        const nearestWalkable = findNearestWalkableTile(startTileX, startTileY, currentMap, mapCols, mapRows);
+        if (nearestWalkable) {
+            player.x = nearestWalkable.x * TILE_SIZE;
+            player.y = nearestWalkable.y * TILE_SIZE;
+            console.log(`Player moved to nearest walkable tile: (${nearestWalkable.x}, ${nearestWalkable.y}) -> Pixel coords: (${player.x}, ${player.y})`);
+        } else {
+            console.error("CRITICAL: Could not find any walkable tile near player start! Halting initialization.");
+            return; // Stop initialization if no walkable tile found
+        }
+    }
+    // --- End Ensure Player Starts on Walkable Tile ---
+
     try {
-        changeMap(initialMapId); // Change map data *after* coords are set
+        changeMap(initialMapId); // Change map data *after* coords are set and validated
         console.log("[DEBUG] initializeGame: changeMap finished."); // ADDED LOG
 
         // Spawn entities for the initial map (needs to happen *after* changeMap sets currentMapId)
@@ -117,6 +154,20 @@ function initializeGame() {
     console.log(`Auto-save enabled every ${SAVE_INTERVAL / 1000} seconds.`);
 
     gameLoop(); // Start the game loop
+
+    // --- Initial Camera Position ---
+    // Calculate initial camera position immediately after setting player coords
+    // to avoid seeing the player at (0,0) relative to viewport on the first frame.
+    const mapWidth = getMapCols() * TILE_SIZE;
+    const mapHeight = getMapRows() * TILE_SIZE;
+    let targetCameraX = player.x - CANVAS_WIDTH / 2 + TILE_SIZE / 2;
+    let targetCameraY = player.y - CANVAS_HEIGHT / 2 + TILE_SIZE / 2;
+    cameraX = Math.max(0, Math.min(targetCameraX, mapWidth - CANVAS_WIDTH));
+    cameraY = Math.max(0, Math.min(targetCameraY, mapHeight - CANVAS_HEIGHT));
+    cameraX = Math.floor(cameraX);
+    cameraY = Math.floor(cameraY);
+    console.log(`[DEBUG] initializeGame: Initial camera set to (${cameraX}, ${cameraY})`);
+    // --- End Initial Camera Position ---
 }
 
 // --- Input Handling ---
@@ -390,8 +441,29 @@ function update() {
                 console.log(`Transitioning to map ${newMapId}. New coords: (${newPlayerCoords.x}, ${newPlayerCoords.y})`);
                 player.x = newPlayerCoords.x;
                 player.y = newPlayerCoords.y;
-                changeMap(newMapId); // Change map data
+                changeMap(newMapId); // Change map data FIRST
                 mapChanged = true;
+
+                // --- Ensure Player Lands on Walkable Tile After Transition ---
+                const newMapData = getCurrentMap();
+                const newMapCols = getMapCols();
+                const newMapRows = getMapRows();
+                const landTileX = Math.floor(player.x / TILE_SIZE);
+                const landTileY = Math.floor(player.y / TILE_SIZE);
+
+                if (!isWalkable(landTileX, landTileY, newMapData, newMapCols, newMapRows)) {
+                    console.warn(`Player landed on non-walkable tile (${landTileX}, ${landTileY}) after map transition. Finding nearest...`);
+                    const nearestWalkable = findNearestWalkableTile(landTileX, landTileY, newMapData, newMapCols, newMapRows);
+                    if (nearestWalkable) {
+                        player.x = nearestWalkable.x * TILE_SIZE;
+                        player.y = nearestWalkable.y * TILE_SIZE;
+                        console.log(`Player moved to nearest walkable tile after transition: (${nearestWalkable.x}, ${nearestWalkable.y}) -> Pixel coords: (${player.x}, ${player.y})`);
+                    } else {
+                         console.error(`CRITICAL: Could not find walkable tile after transition to ${newMapId}! Player might be stuck.`);
+                         // Consider alternative fallback? For now, log error.
+                    }
+                }
+                // --- End Ensure Walkable After Transition ---
 
                 // Clear and respawn entities for the new map
                 clearEnemies();

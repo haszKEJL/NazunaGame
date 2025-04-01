@@ -7,9 +7,12 @@ body {
     padding: 0;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: center; /* Center content horizontally */
     min-height: 100vh;
-    overflow: hidden; /* Prevent scrollbars from base layout */
+    padding-top: 20px; /* Add some padding at the top */
+    padding-bottom: 20px; /* Add padding at the bottom */
+    box-sizing: border-box; /* Include padding in height calculation */
+    /* Body will scroll naturally if content exceeds viewport height */
 }
 
 h1, h2, h3 {
@@ -73,6 +76,8 @@ a:hover {
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
     position: relative; /* Needed for overlay positioning */
     max-width: 900px; /* Limit overall width */
+    /* REMOVED height/overflow constraints from wrapper, let body handle scroll */
+    box-sizing: border-box;
 }
 
 .game-area {
