@@ -502,4 +502,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Expose functions needed by other modules (like auth.js)
-export { showGameUI, showAuthForms, updateUI }; // updateUI might be needed by auth after login
+export { showGameUI, showAuthForms }; // Removed duplicate export of updateUI
