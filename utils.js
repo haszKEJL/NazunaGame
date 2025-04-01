@@ -5,8 +5,8 @@ import {
 
 // Define walkable tiles in a set for easy checking
 const walkableTiles = new Set([
-    TILE_FLOOR,
-    // TILE_GRASS, // Grass is no longer walkable
+    TILE_FLOOR,         // Floor is walkable again
+    // TILE_GRASS, // Grass is non-walkable
     TILE_ROAD,
     TILE_DOOR,          // Doors are walkable (trigger transitions)
     TILE_CITY_ENTRANCE // City entrances are walkable (trigger transitions)

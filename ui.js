@@ -3,43 +3,49 @@ console.log("--- ui.js script started execution ---");
 // Import necessary functions from player.js
 import { player, spendStatPoint, equipItem, upgradeInventoryItem, savePlayerData } from './player.js'; // Added savePlayerData
 
-// --- Get DOM Elements ---
-const uiContainer = document.getElementById('uiContainer');
-const gameContainer = document.querySelector('.game-container'); // The parent of canvas and uiContainer
+// --- Get DOM Elements (Updated for new structure) ---
+// Main UI Panels
+const playerStatsContent = document.getElementById('uiStatsContent');
+const actionLogContent = document.getElementById('uiLogContent');
+// Overlays & Modals
 const statModal = document.getElementById('statModal');
+const dialogueBox = document.getElementById('dialogueBox');
+const inventoryScreen = document.getElementById('inventoryScreen');
+const authForms = document.getElementById('authForms'); // The container for both forms
+// Stat Modal Internals
 const modalPointsRemaining = document.getElementById('modalPointsRemaining');
 const modalStatStr = document.getElementById('modalStatStr');
 const modalStatDex = document.getElementById('modalStatDex');
 const modalStatCon = document.getElementById('modalStatCon');
 const modalStatInt = document.getElementById('modalStatInt');
 const modalStatAgi = document.getElementById('modalStatAgi');
-const modalContent = statModal ? statModal.querySelector('.modal-content') : null;
-const closeModalBtn = document.getElementById('closeStatModalBtn');
-// Dialogue Box Elements
-const dialogueBox = document.getElementById('dialogueBox');
+const statModalContent = statModal ? statModal.querySelector('.modal-content') : null; // Get content div for button delegation
+const closeStatModalBtn = document.getElementById('closeStatModalBtn'); // Now a span
+// Dialogue Box Internals
 const dialogueSpeaker = document.getElementById('dialogueSpeaker');
 const dialogueText = document.getElementById('dialogueText');
-// Inventory Screen Elements
-const inventoryScreen = document.getElementById('inventoryScreen');
-const equipSlotHelmet = document.getElementById('equipSlotHelmet');
-const equipSlotNecklace = document.getElementById('equipSlotNecklace');
-const equipSlotTalisman = document.getElementById('equipSlotTalisman');
-const equipSlotWeapon = document.getElementById('equipSlotWeapon');
-const equipSlotArmor = document.getElementById('equipSlotArmor');
-const equipSlotShield = document.getElementById('equipSlotShield');
-const equipSlotRing1 = document.getElementById('equipSlotRing1');
-const equipSlotRing2 = document.getElementById('equipSlotRing2');
-const equipSlotBoots = document.getElementById('equipSlotBoots');
+// Inventory Screen Internals
 const inventoryGrid = document.getElementById('inventoryGrid');
 const closeInventoryBtn = document.getElementById('closeInventoryBtn');
+// Equipment Slots (Simplified)
+const equipSlots = {
+    head: document.getElementById('equipSlotHead'),
+    weapon: document.getElementById('equipSlotWeapon'),
+    armor: document.getElementById('equipSlotArmor'),
+    shield: document.getElementById('equipSlotShield'),
+    boots: document.getElementById('equipSlotBoots'),
+    necklace: document.getElementById('equipSlotNecklace'),
+    ring1: document.getElementById('equipSlotRing1'),
+    ring2: document.getElementById('equipSlotRing2')
+    // Add other slots if defined in HTML
+};
 // Item Details Elements
 const selectedItemName = document.getElementById('selectedItemName');
 const selectedItemStats = document.getElementById('selectedItemStats');
 const selectedItemUpgradeInfo = document.getElementById('selectedItemUpgradeInfo');
 const upgradeItemBtn = document.getElementById('upgradeItemBtn');
-const equipItemBtn = document.getElementById('equipItemBtn'); // Added Equip button
+const equipItemBtn = document.getElementById('equipItemBtn');
 // Authentication Form Elements
-const authForms = document.getElementById('authForms'); // The container for both forms
 const registerForm = document.getElementById('registerForm');
 const loginForm = document.getElementById('loginForm');
 const registerBtn = document.getElementById('registerBtn');
@@ -52,23 +58,23 @@ const loginMessage = document.getElementById('loginMessage');
 // --- State for UI ---
 let selectedInventoryIndex = null; // Track selected item index
 
-// Check for essential elements (add new slots and buttons)
-// TODO: Add checks for ALL new equipSlot IDs from HTML
-if (!uiContainer || !gameContainer || !statModal || !modalContent || !closeModalBtn || !dialogueBox || !dialogueSpeaker || !dialogueText || !inventoryScreen || !inventoryGrid || !closeInventoryBtn || !selectedItemName || !selectedItemStats || !selectedItemUpgradeInfo || !upgradeItemBtn || !equipItemBtn || !authForms || !registerForm || !loginForm || !registerBtn || !loginBtn || !showLoginLink || !showRegisterLink || !registerMessage || !loginMessage) {
-    console.error("CRITICAL: One or more essential UI elements are missing from index.html!");
+// Basic check for essential elements
+if (!playerStatsContent || !actionLogContent || !statModal || !dialogueBox || !inventoryScreen || !authForms) {
+    console.error("CRITICAL: One or more essential UI panel/overlay elements are missing!");
 }
+// Add more checks as needed
 
 // --- UI Visibility Functions ---
-function showGameUI() {
-    if (!gameContainer) return;
-    gameContainer.style.display = 'flex'; // Show the game container
-    authForms.style.display = 'none'; // Hide auth forms
+// These now control the overlays
+function showOverlay(element) {
+    if (element) {
+        element.style.display = 'flex'; // Use flex for centering overlays
+    }
 }
-
-function showAuthForms() {
-    if (!gameContainer) return;
-    gameContainer.style.display = 'none'; // Hide the game container
-    authForms.style.display = 'block'; // Show auth forms
+function hideOverlay(element) {
+    if (element) {
+        element.style.display = 'none';
+    }
 }
 
 // --- Dialogue Control ---
@@ -77,13 +83,13 @@ export function showDialogue(speakerName, text) {
     console.log(`UI: Showing dialogue - Speaker: ${speakerName}, Text: ${text}`);
     dialogueSpeaker.textContent = speakerName + ":";
     dialogueText.textContent = text;
-    dialogueBox.style.display = 'block';
+    showOverlay(dialogueBox); // Use overlay function
 }
 
 export function hideDialogue() {
     if (!dialogueBox) return;
     console.log("UI: Hiding dialogue box.");
-    dialogueBox.style.display = 'none';
+    hideOverlay(dialogueBox); // Use overlay function
     dialogueSpeaker.textContent = '';
     dialogueText.textContent = '';
 }
@@ -99,33 +105,18 @@ export function showInventory() {
     if (!inventoryScreen) return;
     console.log("UI: Showing Inventory Screen.");
     updateInventoryUI(); // Populate before showing
-    inventoryScreen.style.display = 'flex'; // Use flex as defined in CSS
+    showOverlay(inventoryScreen); // Use overlay function
 }
 
 export function hideInventory() {
     if (!inventoryScreen) return;
     console.log("UI: Hiding Inventory Screen.");
-    inventoryScreen.style.display = 'none';
+    hideOverlay(inventoryScreen); // Use overlay function
 }
 
 // Function to update the inventory screen display
 function updateInventoryUI() {
-    // Get all new slot elements (add more as needed based on HTML)
-    const equipSlots = {
-        special1: document.getElementById('equipSlotSpecial1'),
-        head: document.getElementById('equipSlotHead'),
-        portrait: document.getElementById('equipSlotPortrait'),
-        body: document.getElementById('equipSlotBody'),
-        weapon: document.getElementById('equipSlotWeapon'),
-        armor: document.getElementById('equipSlotArmor'),
-        ranged: document.getElementById('equipSlotRanged'),
-        mount: document.getElementById('equipSlotMount'),
-        belt: document.getElementById('equipSlotBelt'),
-        special2: document.getElementById('equipSlotSpecial2'),
-        legs: document.getElementById('equipSlotLegs'),
-        feet: document.getElementById('equipSlotFeet')
-        // Add other slots like necklace, rings, talisman if they exist in player.equipment
-    };
+    // Equipment slots are already fetched into the 'equipSlots' object
 
     if (!inventoryGrid) return; // Basic check
 
@@ -133,9 +124,12 @@ function updateInventoryUI() {
     for (const slotName in equipSlots) {
         const slotElement = equipSlots[slotName];
         if (slotElement) {
-            slotElement.innerHTML = '';
-        } else {
-            // console.warn(`UI: Equip slot element '${slotName}' not found.`); // Reduce noise
+            const displayDiv = slotElement.querySelector('.item-display');
+            if (displayDiv) {
+                displayDiv.innerHTML = ''; // Clear only the display part
+            } else {
+                 slotElement.innerHTML = ''; // Fallback clear whole slot
+            }
         }
     }
     inventoryGrid.innerHTML = '';
@@ -148,11 +142,16 @@ function updateInventoryUI() {
         const item = player.equipment[slotName];
         if (item) {
             const itemDiv = createItemDiv(item, slotName); // Pass slot name
-            const slotElement = equipSlots[slotName]; // Use the fetched element
+            const slotElement = equipSlots[slotName]; // Get the slot container
             if (slotElement) {
-                slotElement.appendChild(itemDiv);
+                 const displayDiv = slotElement.querySelector('.item-display');
+                 if (displayDiv) {
+                     displayDiv.appendChild(itemDiv); // Append to the display div
+                 } else {
+                     slotElement.appendChild(itemDiv); // Fallback append to slot
+                 }
             } else {
-                console.warn(`UI: Could not find slot element for '${slotName}' in equipSlots map.`);
+                // console.warn(`UI: Could not find slot element for '${slotName}' in equipSlots map.`); // Reduce noise
             }
         }
     }
@@ -166,13 +165,12 @@ function updateInventoryUI() {
     player.inventory.forEach((item, index) => {
         const itemDiv = createItemDiv(item, index); // Pass inventory index
         inventoryGrid.appendChild(itemDiv);
-        console.log(`UI: Added item '${item.name}' to inventory grid at index ${index}`);
+        // console.log(`UI: Added item '${item.name}' to inventory grid at index ${index}`); // Reduce noise
     });
 }
 
 // Function to update the item details pane
 function updateSelectedItemDetails(itemIndex) {
-     // Add equipItemBtn check
      if (!selectedItemName || !selectedItemStats || !selectedItemUpgradeInfo || !upgradeItemBtn || !equipItemBtn) return;
 
      // Clear previous selection highlight
@@ -184,14 +182,14 @@ function updateSelectedItemDetails(itemIndex) {
          selectedItemStats.innerHTML = '';
          selectedItemUpgradeInfo.innerHTML = '';
          upgradeItemBtn.disabled = true;
-         equipItemBtn.disabled = true; // Disable equip button too
+         equipItemBtn.disabled = true;
          return;
      }
 
      selectedInventoryIndex = itemIndex;
      const item = player.inventory[itemIndex];
 
-     // Highlight selected item
+     // Highlight selected item in the grid
      const selectedDiv = inventoryGrid.querySelector(`.inventory-item[data-inventory-index="${itemIndex}"]`);
      if (selectedDiv) {
          selectedDiv.classList.add('selected');
@@ -208,27 +206,27 @@ function updateSelectedItemDetails(itemIndex) {
      } else {
          statsHTML = '<span>No Stats</span>';
      }
+     // Add item type/slot info
+     statsHTML += `<br><span>Type: ${item.type || 'N/A'}</span><br>`;
+     if(item.slot) statsHTML += `<span>Slot: ${item.slot}</span><br>`;
+
      selectedItemStats.innerHTML = statsHTML;
 
      // Display upgrade info
      let upgradeHTML = '';
      let canUpgrade = false;
-     // Check if item is upgradable (has level and base value)
      if (typeof item.upgradeLevel !== 'undefined' && item.baseValue) {
          const cost = calculateUpgradeCost(item);
-         const displayCost = Math.floor((item.baseValue || 0) * Math.pow(2, item.upgradeLevel));
-         // Display current level and cost, no max level shown
-         upgradeHTML = `Level: ${item.upgradeLevel}<br>Upgrade Cost: ${displayCost} Gold`;
-         canUpgrade = player.gold >= displayCost;
+         upgradeHTML = `Level: ${item.upgradeLevel}<br>Upgrade Cost: ${cost} Gold`;
+         canUpgrade = player.gold >= cost;
      } else {
-         // Item doesn't have upgradeLevel or baseValue defined
          upgradeHTML = '<span>Not Upgradable</span>';
      }
      selectedItemUpgradeInfo.innerHTML = upgradeHTML;
      upgradeItemBtn.disabled = !canUpgrade;
 
-     // Enable/disable Equip button based on item type
-     equipItemBtn.disabled = !item || !item.equipSlot; // Disable if no item or item not equippable
+     // Enable/disable Equip button based on item type/slot
+     equipItemBtn.disabled = !item || !item.slot; // Disable if no item or no slot defined
 
 }
 
@@ -242,25 +240,36 @@ function calculateUpgradeCost(item) {
 
 // Helper function to create an item div (used for both equip and inventory)
 function createItemDiv(item, identifier) {
-    console.log(`UI: Creating item div for:`, item, `Identifier:`, identifier); // Add detailed log
+    // console.log(`UI: Creating item div for:`, item, `Identifier:`, identifier); // Reduce noise
     const itemDiv = document.createElement('div');
-    itemDiv.classList.add('inventory-item'); // Use same base class for styling
-    // Add specific dataset based on whether it's equipped or inventory index
-    if (typeof identifier === 'string') { // It's an equipment slot name
-        itemDiv.dataset.equipSlot = identifier;
-        itemDiv.classList.add('equipped-item'); // Maybe different style later
-    } else { // It's an inventory index
-        itemDiv.dataset.inventoryIndex = identifier;
-    }
+    itemDiv.classList.add('inventory-item'); // Base class
 
-    if (!item || !item.name) { // Check if item or item.name is missing
+    if (!item || !item.name) {
         console.error("UI: Invalid item data passed to createItemDiv:", item);
-        itemDiv.textContent = 'Error'; // Display error if item is invalid
+        itemDiv.textContent = 'Error';
         return itemDiv;
     }
 
-    itemDiv.textContent = item.name; // Placeholder: Use name
-    // TODO: Add image/icon later
+    // Add dataset for identification
+    if (typeof identifier === 'string') { // Equipment slot name
+        itemDiv.dataset.equipSlot = identifier;
+        itemDiv.classList.add('equipped-item');
+    } else { // Inventory index
+        itemDiv.dataset.inventoryIndex = identifier;
+    }
+
+    // Add rarity class
+    if (item.rarity) {
+        itemDiv.classList.add(`item-${item.rarity}`);
+    } else {
+        itemDiv.classList.add('item-common'); // Default rarity
+    }
+
+    // Display item name (or icon later)
+    const nameSpan = document.createElement('span');
+    nameSpan.textContent = item.name;
+    itemDiv.appendChild(nameSpan);
+    // TODO: Add image element if item.icon exists
 
     // Add quantity display for stackable items
     if (item.stackable && item.quantity > 1) {
@@ -277,232 +286,220 @@ function createItemDiv(item, identifier) {
 export function openStatModal() {
     if (!statModal) return;
     updateModalStats(); // Update display when opening
-    statModal.style.display = 'block';
+    showOverlay(statModal); // Use overlay function
     console.log("Stat modal opened.");
-    // TODO: Pause game loop? (Requires changes in game.js)
 }
 
 function closeStatModal() {
     if (!statModal) return;
-    statModal.style.display = 'none';
+    hideOverlay(statModal); // Use overlay function
     console.log("Stat modal closed.");
     updateUI(); // Refresh main UI in case points were spent
-    // TODO: Resume game loop? (Requires changes in game.js)
 }
 
 function updateModalStats() {
-    // Check for core elements first
-    if (!modalPointsRemaining || !modalStatStr || !modalStatDex || !modalContent) return;
+    if (!modalPointsRemaining || !modalStatStr || !modalStatDex || !statModalContent) return;
 
     modalPointsRemaining.textContent = player.statPoints;
     modalStatStr.textContent = player.strength;
     modalStatDex.textContent = player.dexterity;
-    // Update new stats if elements exist
     if (modalStatCon) modalStatCon.textContent = player.constitution;
     if (modalStatInt) modalStatInt.textContent = player.intelligence;
     if (modalStatAgi) modalStatAgi.textContent = player.agility;
 
-
     // Disable buttons if no points left
-    const buttons = modalContent.querySelectorAll('.modal-stat-button');
+    const buttons = statModalContent.querySelectorAll('.modal-stat-button');
     buttons.forEach(btn => {
         btn.disabled = player.statPoints <= 0;
     });
 }
 
-// --- Main UI Update ---
+// --- Main UI Update (Populates Panels) ---
 export function updateUI() {
-    if (!uiContainer) return;
+    if (!playerStatsContent || !actionLogContent) return; // Check if panels exist
 
-    const potion = player.inventory.find(i => i.name === 'Health Potion');
-    const potionCount = potion ? potion.quantity : 0;
-    // Dynamically build equipment display string
-    let equipmentHTML = '';
-    for (const slot in player.equipment) {
-        const item = player.equipment[slot];
-        const itemName = item ? item.name : 'None';
-        // Capitalize slot name for display
-        const slotDisplayName = slot.charAt(0).toUpperCase() + slot.slice(1);
-        equipmentHTML += `<p>${slotDisplayName}: ${itemName}</p>`;
-    }
-
-    // Display stat points, but no button here anymore
-    const statPointsHTML = `<p>Stat Points: ${player.statPoints} ${player.statPoints > 0 ? '(Press P to allocate)' : ''}</p>`;
-
-    const uiHTML = `
+    // --- Update Stats Panel ---
+    const statPointsHTML = player.statPoints > 0 ? ` <button id="openStatModalBtn" class="inline-button">(P) Allocate</button>` : '';
+    const statsHTML = `
         <p>HP: ${player.hp} / ${player.maxHp}</p>
-        <p>Level: ${player.level}</p>
-        <p>XP: ${player.xp} / ${player.xpToNextLevel}</p>
-        ${statPointsHTML}
+        <p>Level: ${player.level} (XP: ${player.xp}/${player.xpToNextLevel})</p>
+        <p>Points: ${player.statPoints}${statPointsHTML}</p>
         <hr>
-        <p>HP: ${player.hp} / ${player.maxHp}</p> <!-- Duplicated HP, remove one -->
-        <p>Attack: ${player.attack}</p>
-        <p>Defense: ${player.defense}</p>
+        <p>STR: ${player.strength} | DEX: ${player.dexterity} | CON: ${player.constitution}</p>
+        <p>INT: ${player.intelligence} | AGI: ${player.agility}</p>
         <hr>
-        <p>STR: ${player.strength}</p>
-        <p>DEX: ${player.dexterity}</p>
-        <p>CON: ${player.constitution}</p>
-        <p>INT: ${player.intelligence}</p>
-        <p>AGI: ${player.agility}</p>
+        <p>Attack: ${player.attack} | Defense: ${player.defense}</p>
         <hr>
-        <p>Gold: ${player.gold}</p> <!-- Display Gold -->
-        <hr>
-        <p>Potions (H): ${potionCount}</p>
-        ${equipmentHTML} <!-- Display all equipment -->
-        <!-- <p>(E to Equip)</p> REMOVED -->
-        <p>(Tab for Inv)</p> <!-- Added hint for inventory -->
-        <button id="logoutBtn">Logout</button> <!-- Logout Button -->
+        <p>Gold: ${player.gold}</p>
+        <button id="logoutBtn">Logout</button>
     `;
+    playerStatsContent.innerHTML = statsHTML;
 
-    uiContainer.innerHTML = uiHTML;
-
-    // Re-attach event listener for logout button every time UI updates
-    // This ensures it's always present after innerHTML overwrite
+    // Re-attach listeners for buttons inside the panel
+    const openStatBtn = document.getElementById('openStatModalBtn');
+    if (openStatBtn) {
+        openStatBtn.addEventListener('click', openStatModal);
+    }
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => { // Make listener async
-            console.log("Logout button clicked. Attempting to save data first...");
-            try {
-                await savePlayerData(); // Wait for save to complete
-                console.log("Data save attempt finished. Proceeding with logout.");
-            } catch (error) {
-                console.error("Error during pre-logout save:", error);
-                // Decide if logout should proceed even if save fails? For now, yes.
-            } finally {
-                // Clear local storage and reload regardless of save success/failure
-                console.log("Clearing local storage and reloading...");
-                localStorage.removeItem('token');
-                localStorage.removeItem('username');
-                window.location.reload(); // Reload to trigger auth check
-            }
-        });
-    } else {
-        console.warn("Logout button not found after UI update.");
+        logoutBtn.addEventListener('click', handleLogout); // Use separate handler
     }
 
-    // No longer need to attach listener for the open button here
+    // --- Update Log Panel (Example - Needs real log data) ---
+    // For now, just keep the last message or add a new one
+    // In a real implementation, you'd have a log array
+    // actionLogContent.innerHTML = "Game started.<br>Moved North."; // Replace with actual log
+}
+
+// --- Add to Log Function ---
+export function addLogMessage(message) {
+    if (!actionLogContent) return;
+    const maxLogLines = 5; // Keep log concise
+    const messageElement = document.createElement('p');
+    messageElement.textContent = message;
+    actionLogContent.appendChild(messageElement);
+
+    // Remove oldest message if log exceeds max lines
+    while (actionLogContent.children.length > maxLogLines) {
+        actionLogContent.removeChild(actionLogContent.firstChild);
+    }
+    // Scroll to bottom
+    actionLogContent.scrollTop = actionLogContent.scrollHeight;
+}
+
+
+// --- Logout Handler ---
+async function handleLogout() {
+    console.log("Logout button clicked. Attempting to save data first...");
+    try {
+        await savePlayerData(); // Wait for save to complete
+        console.log("Data save attempt finished. Proceeding with logout.");
+    } catch (error) {
+        console.error("Error during pre-logout save:", error);
+    } finally {
+        console.log("Clearing local storage and reloading...");
+        localStorage.removeItem('token');
+        localStorage.removeItem('username');
+        window.location.reload(); // Reload to trigger auth check
+    }
 }
 
 // --- Event Listeners ---
 function setupListeners() {
     // -- Modal Listeners --
-    if (modalContent && closeModalBtn) {
-        modalContent.addEventListener('click', (event) => {
+    if (statModalContent && closeStatModalBtn) {
+        // Use event delegation on the content div for stat buttons
+        statModalContent.addEventListener('click', (event) => {
             const button = event.target.closest('button.modal-stat-button');
-            if (button) {
+            if (button && button.dataset.stat) {
                 const statToIncrease = button.dataset.stat;
                 console.log("Modal stat button clicked:", statToIncrease);
-                const validStats = ['strength', 'dexterity', 'constitution', 'intelligence', 'agility'];
-                if (validStats.includes(statToIncrease)) {
-                    const success = spendStatPoint(statToIncrease);
-                    if (success) {
-                        updateModalStats();
-                    } else {
-                        console.log("Failed to spend point (likely 0 points left).");
-                    }
+                const success = spendStatPoint(statToIncrease);
+                if (success) {
+                    updateModalStats(); // Update modal display
+                    // updateUI(); // Update main UI panel as well (optional here, happens on close)
                 }
             }
         });
-        closeModalBtn.addEventListener('click', closeStatModal);
-        console.log("Modal listeners attached.");
+        // Close button listener (now a span)
+        closeStatModalBtn.addEventListener('click', closeStatModal);
+        console.log("Stat Modal listeners attached.");
     } else {
-         console.error("Cannot setup modal listeners - elements missing.");
+         console.error("Cannot setup Stat Modal listeners - elements missing.");
     }
 
     // -- Inventory Listeners --
-    if (inventoryScreen && closeInventoryBtn && inventoryGrid && equipSlotWeapon && equipSlotArmor) {
-        // Close button listener (still primarily handled by Tab/Escape in game.js)
-        closeInventoryBtn.addEventListener('click', () => {
-            console.log("Close Inventory button clicked (should be handled by Tab/Escape in game.js)");
-            // If direct button closure is needed, game.js needs to expose toggleInventoryScreen
-            // For now, we rely on the keyup listener in game.js
-            // hideInventory(); // This would hide UI but not change game state
-        });
+    if (inventoryScreen && closeInventoryBtn && inventoryGrid && equipItemBtn && upgradeItemBtn) {
+        // Close button listener
+        closeInventoryBtn.addEventListener('click', hideInventory); // Direct hide on button click
 
         // Inventory item click listener (delegation)
         inventoryGrid.addEventListener('click', (event) => {
             const itemDiv = event.target.closest('.inventory-item');
             if (itemDiv && itemDiv.dataset.inventoryIndex !== undefined) {
                 const index = parseInt(itemDiv.dataset.inventoryIndex, 10);
-                console.log(`Clicked inventory item at index: ${index}`);
-                updateSelectedItemDetails(index); // Show details on click
-                // Equip logic could be moved to a double-click or context menu later
-                // equipItem(index); // Don't equip on single click anymore
+                updateSelectedItemDetails(index);
             } else {
-                 // Clicked outside an item, deselect
-                 updateSelectedItemDetails(null);
+                 updateSelectedItemDetails(null); // Clicked outside an item
             }
         });
 
-         // Equipment slot click listener (delegation on parent) - For unequipping later
-         const equipSlotsContainer = equipSlotWeapon?.closest('.equip-slots'); // Use optional chaining
-         if (equipSlotsContainer) {
-             equipSlotsContainer.addEventListener('click', (event) => {
-                 const itemDiv = event.target.closest('.inventory-item.equipped-item'); // Click the item within the slot
-                 if (itemDiv && itemDiv.dataset.equipSlot) {
-                     const slotName = itemDiv.dataset.equipSlot;
-                     console.log(`Clicked equipped item in slot: ${slotName}`);
-                     // TODO: Implement unequipItem(slotName) in player.js and call it
-                     // unequipItem(slotName); updateInventoryUI(); updateUI();
-                     console.log("Unequip functionality not yet implemented.");
-                     updateSelectedItemDetails(null); // Deselect after clicking equipped item for now
-                 }
-             });
-         }
-
          // Equip button listener
-         if (equipItemBtn) {
-             equipItemBtn.addEventListener('click', () => {
-                 if (selectedInventoryIndex !== null && !equipItemBtn.disabled) {
-                     console.log(`UI: Equip button clicked for index: ${selectedInventoryIndex}`);
-                     const success = equipItem(selectedInventoryIndex); // Call function from player.js
-                     if (success) {
-                         // Refresh UI after successful equip
-                         updateInventoryUI(); // This will re-render grid/slots and clear selection
-                         updateUI(); // Update main panel (stats, equip display)
-                         // No need to re-select, details pane is cleared by updateInventoryUI
-                     } else {
-                         // Maybe show an error message?
-                         console.log("UI: Equip failed (likely incompatible slot or other issue).");
-                     }
+         equipItemBtn.addEventListener('click', () => {
+             if (selectedInventoryIndex !== null && !equipItemBtn.disabled) {
+                 console.log(`UI: Equip button clicked for index: ${selectedInventoryIndex}`);
+                 const success = equipItem(selectedInventoryIndex);
+                 if (success !== false) { // equipItem might not return explicit true
+                     updateInventoryUI(); // Refreshes grid/slots and clears selection/details
+                     updateUI(); // Update main stats panel
+                 } else {
+                     addLogMessage("Cannot equip this item."); // Add feedback
+                     console.log("UI: Equip failed.");
                  }
-             });
-         }
+             }
+         });
 
          // Upgrade button listener
-         if (upgradeItemBtn) {
-             upgradeItemBtn.addEventListener('click', () => {
-                 if (selectedInventoryIndex !== null && !upgradeItemBtn.disabled) {
-                     console.log(`UI: Attempting to upgrade item at index: ${selectedInventoryIndex}`);
-                     const success = upgradeInventoryItem(selectedInventoryIndex); // Call function from player.js
-                     if (success) {
-                         // Refresh UI after successful upgrade
-                         updateInventoryUI(); // This will re-render grid and clear selection
-                         updateUI(); // Update main panel (gold)
-                         // Re-select the item to show updated details
-                         updateSelectedItemDetails(selectedInventoryIndex);
+         upgradeItemBtn.addEventListener('click', () => {
+             if (selectedInventoryIndex !== null && !upgradeItemBtn.disabled) {
+                 console.log(`UI: Attempting to upgrade item at index: ${selectedInventoryIndex}`);
+                 const success = upgradeInventoryItem(selectedInventoryIndex);
+                 if (success) {
+                     addLogMessage("Item upgraded!");
+                     updateInventoryUI(); // Refresh grid
+                     updateUI(); // Update gold in main panel
+                     // Re-select the item to show updated details (index might be invalid if item removed)
+                     // Need to find the item again if list order changes, for now just update details
+                     if (player.inventory[selectedInventoryIndex]) { // Check if item still exists at index
+                        updateSelectedItemDetails(selectedInventoryIndex);
                      } else {
-                         // Update details to potentially show updated cost/gold or error message
-                         updateSelectedItemDetails(selectedInventoryIndex);
-                         // Maybe show a temporary message?
+                        updateSelectedItemDetails(null); // Clear details if item gone
                      }
+                 } else {
+                     addLogMessage("Upgrade failed."); // Add feedback
+                     // Update details to show current gold/cost
+                     updateSelectedItemDetails(selectedInventoryIndex);
                  }
-             });
-         }
+             }
+         });
 
         console.log("Inventory listeners attached.");
     } else {
-         console.error("Cannot setup inventory listeners - elements missing (check equip/upgrade buttons).");
+         console.error("Cannot setup Inventory listeners - elements missing.");
     }
+
+    // -- Auth Form Listeners --
+    if (showLoginLink && showRegisterLink && loginForm && registerForm) {
+        showLoginLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'block';
+            registerForm.style.display = 'none';
+        });
+        showRegisterLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerForm.style.display = 'block';
+            loginForm.style.display = 'none';
+        });
+        console.log("Auth form toggle listeners attached.");
+    } else {
+        console.error("Cannot setup Auth form toggle listeners - elements missing.");
+    }
+
 } // End of setupListeners function
 
 // Setup listeners once the DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     console.log("DOMContentLoaded fired. Setting up listeners.");
-    setupListeners(); // Call the combined setup function
-    // REMOVED checkAuthState() call - auth.js handles initial UI state.
-    // Initial UI render (might show default values briefly before auth completes)
+    setupListeners();
+    // Initial UI state is handled by auth.js checking token
+    // Call updateUI here to render the initial panel structure
     updateUI();
-    // Ensure inventory is hidden initially (CSS should handle this, but belt-and-suspenders)
-    hideInventory();
+    // Ensure overlays are hidden initially
+    hideOverlay(dialogueBox);
+    hideOverlay(inventoryScreen);
+    hideOverlay(statModal);
+    // Auth forms visibility is handled by auth.js
 });
+
+// Expose functions needed by other modules (like auth.js)
+export { showGameUI, showAuthForms, updateUI }; // updateUI might be needed by auth after login

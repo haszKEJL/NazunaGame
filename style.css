@@ -1,554 +1,464 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap'); /* Keep pixel font for title */
-
-:root {
-    --bg-primary: #1a1a2e; /* Dark blue/purple */
-    --bg-secondary: #2a2a4e; /* Slightly lighter */
-    --bg-tertiary: #3a3a6e; /* Even lighter */
-    --text-primary: #e0e0e0; /* Light grey */
-    --text-secondary: #a0a0c0; /* Muted purple/grey */
-    --accent-primary: #ffcc66; /* Gold/Yellow */
-    --accent-secondary: #66ccff; /* Light blue */
-    --border-color: #5a5a8e;
-    --success-color: #4CAF50;
-    --error-color: #f44336;
-    --font-main: 'Inter', sans-serif;
-    --font-title: 'Press Start 2P', cursive;
-    --border-radius: 6px;
-    --box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+/* --- Global Styles & Fonts --- */
+body {
+    font-family: 'Roboto', sans-serif; /* Default modern font */
+    background-color: #1a1a1a; /* Dark background */
+    color: #e0e0e0; /* Light grey text */
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden; /* Prevent scrollbars from base layout */
 }
 
-body {
+h1, h2, h3 {
+    font-family: 'Press Start 2P', cursive; /* Pixel font for headers */
+    color: #ffffff;
+    text-shadow: 1px 1px 2px #000;
+    margin-bottom: 0.5em;
+}
+
+button {
+    font-family: 'Press Start 2P', cursive;
+    background-color: #4a4a6e; /* Dark purple/blue */
+    color: #ffffff;
+    border: 2px solid #7a7a9e;
+    padding: 8px 15px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    font-size: 0.8em;
+    text-transform: uppercase;
+}
+
+button:hover:not(:disabled) {
+    background-color: #6a6a8e;
+    border-color: #9a9abf;
+}
+
+button:disabled {
+    background-color: #333;
+    color: #777;
+    border-color: #555;
+    cursor: not-allowed;
+}
+
+input[type="text"],
+input[type="password"] {
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #e0e0e0;
+    font-family: 'Roboto', sans-serif;
+}
+
+a {
+    color: #87CEEB; /* Sky blue links */
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* --- Game Layout --- */
+.game-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Align to top */
-    min-height: 100vh;
-    margin: 0;
-    padding-top: 20px; /* Add some top padding */
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-family: var(--font-main);
-    font-size: 14px; /* Slightly larger base font */
-    line-height: 1.6;
-}
-
-canvas {
-    border: 1px solid var(--border-color);
-    background-color: #000; /* Black canvas background */
-    box-shadow: var(--box-shadow);
-}
-
-h1 {
-    margin-bottom: 25px;
-    font-family: var(--font-title);
-    color: var(--accent-primary);
-    font-size: 24px; /* Adjust title size */
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.game-container {
-    display: flex;
-    align-items: flex-start;
-    gap: 25px;
-}
-
-#uiContainer {
-    width: 220px; /* Slightly wider */
     padding: 20px;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    height: 608px; /* Match canvas height */
-    box-sizing: border-box;
-    overflow-y: auto;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    font-size: 13px; /* Adjust UI font size */
+    background-color: #2a2a3a; /* Slightly lighter dark background for wrapper */
+    border-radius: 8px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    position: relative; /* Needed for overlay positioning */
+    max-width: 900px; /* Limit overall width */
 }
 
-#uiContainer p {
-    margin: 8px 0;
-    color: var(--text-secondary);
-}
-#uiContainer p:first-child { margin-top: 0; }
-#uiContainer hr {
-    border: none;
-    border-top: 1px solid var(--border-color);
-    margin: 15px 0;
-}
-#uiContainer button#logoutBtn { /* Style logout specifically */
-    width: 100%;
-    padding: 10px;
-    margin-top: 15px;
-    background-color: var(--error-color);
-    color: white;
-    border: none;
-    border-radius: var(--border-radius);
-    cursor: pointer;
-    font-weight: 600;
-    transition: background-color 0.2s ease;
-}
-#uiContainer button#logoutBtn:hover {
-    background-color: #d32f2f; /* Darker red on hover */
+.game-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
-/* --- Modal Styles --- */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 100; /* High z-index */
-    left: 0;
+#gameCanvas {
+    border: 3px solid #4a4a6e; /* Border around the canvas */
+    background-color: #000; /* Black background if canvas is transparent */
+    display: block; /* Remove extra space below canvas */
+    margin-bottom: 15px; /* Space between canvas and UI panels */
+}
+
+#gameCanvas:focus {
+    outline: none; /* Remove default browser focus outline */
+    border-color: #87CEEB; /* Highlight canvas border when focused */
+}
+
+/* --- Main UI Panels (Below Canvas) --- */
+.main-ui-panels {
+    display: flex;
+    justify-content: space-between;
+    width: 800px; /* Match canvas width */
+    gap: 15px;
+}
+
+.ui-panel {
+    background-color: #3a3a4a; /* Dark panel background */
+    border: 1px solid #5a5a6a;
+    border-radius: 5px;
+    padding: 10px 15px;
+    flex: 1; /* Panels share space equally */
+    min-height: 100px; /* Ensure panels have some height */
+    box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.3);
+}
+
+.ui-panel h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 1em;
+    border-bottom: 1px solid #5a5a6a;
+    padding-bottom: 5px;
+}
+
+#player-stats-panel div,
+#action-log-panel div,
+#controls-panel p {
+    font-size: 0.9em;
+    line-height: 1.4;
+}
+
+#action-log-panel div {
+    max-height: 80px; /* Limit log height */
+    overflow-y: auto; /* Add scrollbar if needed */
+}
+
+/* --- Overlay Styles (Common for Modals, Inventory, Dialogue) --- */
+.overlay {
+    position: absolute;
     top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.7); /* Darker overlay */
-    backdrop-filter: blur(3px); /* Optional blur effect */
+    background-color: rgba(0, 0, 0, 0.75); /* Dark semi-transparent background */
+    display: none; /* Hidden by default */
+    justify-content: center;
+    align-items: center;
+    z-index: 10; /* Ensure overlays are on top */
+    padding: 20px;
+    box-sizing: border-box;
 }
 
-.modal-content {
-    background-color: var(--bg-secondary);
-    color: var(--text-primary);
-    margin: 10% auto; /* Adjust vertical margin */
-    padding: 25px 30px;
-    border: 1px solid var(--border-color);
-    width: 90%;
-    max-width: 450px;
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
-    text-align: center;
+/* --- Authentication Forms --- */
+.auth-forms {
+    /* Uses .overlay styles */
+    /* Display is controlled by auth.js */
 }
-.modal-content h2 {
-    color: var(--accent-primary);
+
+.auth-form {
+    background-color: #2a2a3a;
+    padding: 30px;
+    border-radius: 8px;
+    border: 1px solid #4a4a6e;
+    text-align: center;
+    width: 300px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.auth-form h2 {
+    margin-top: 0;
     margin-bottom: 20px;
 }
 
-.stat-line {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 12px 0;
-    padding-bottom: 8px;
-    border-bottom: 1px solid var(--border-color);
-}
-.stat-line span {
-    flex-basis: 35%;
-    text-align: left;
-    color: var(--text-secondary);
-}
-.stat-line span:nth-child(2) { /* Value */
-    flex-basis: 20%;
-    text-align: center;
-    font-weight: 600;
-    color: var(--text-primary);
-}
-.stat-line button {
-    flex-basis: 15%;
+.auth-form input {
+    width: calc(100% - 20px); /* Full width minus padding */
+    margin-bottom: 15px;
 }
 
-.modal-stat-button, #closeStatModalBtn {
-    padding: 6px 12px;
-    cursor: pointer;
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    border-radius: 4px;
-    transition: background-color 0.2s ease;
-}
-.modal-stat-button:hover, #closeStatModalBtn:hover {
-    background-color: var(--accent-secondary);
-    color: var(--bg-primary);
-}
-#closeStatModalBtn {
-    margin-top: 20px;
-    background-color: var(--accent-primary);
-    color: var(--bg-primary);
-    font-weight: 600;
-}
-#closeStatModalBtn:hover {
-     background-color: #ffb700; /* Darker gold */
+.auth-form button {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
 }
 
-/* --- Dialogue Box Styles --- */
+.auth-form p {
+    margin-top: 15px;
+    font-size: 0.9em;
+}
+
+.auth-message {
+    margin-top: 15px;
+    color: #ff6b6b; /* Red for errors */
+    font-weight: bold;
+    min-height: 1.2em; /* Reserve space */
+}
+
+/* --- Dialogue Box --- */
 .dialogue-box {
-    display: none;
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 85%;
-    max-width: 700px;
-    background-color: rgba(26, 26, 46, 0.9); /* Darker, less transparent */
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 20px;
-    color: var(--text-primary);
-    z-index: 10;
-    box-sizing: border-box;
-    font-size: 15px;
-    line-height: 1.5;
-    box-shadow: var(--box-shadow);
+    /* Uses .overlay styles, but positioned at bottom */
+    align-items: flex-end; /* Align content to bottom */
+    background: none; /* Transparent background for dialogue overlay */
+    pointer-events: none; /* Allow clicks through overlay */
+}
+
+.dialogue-box > div { /* Style the inner content box */
+    background-color: rgba(42, 42, 58, 0.9); /* Dark semi-transparent */
+    border: 2px solid #7a7a9e;
+    border-radius: 5px;
+    padding: 15px 20px;
+    width: 80%;
+    max-width: 760px; /* Slightly less than canvas */
+    margin-bottom: 20px; /* Position above bottom edge */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    pointer-events: auto; /* Enable interaction with the box itself */
+    color: #fff;
 }
 
 .dialogue-speaker {
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: var(--accent-primary);
+    font-family: 'Press Start 2P', cursive;
+    font-size: 1em;
+    margin: 0 0 10px 0;
+    color: #FFD700; /* Gold speaker name */
 }
 
 .dialogue-text {
-    margin-bottom: 15px;
+    font-size: 1em;
+    line-height: 1.5;
+    margin: 0;
 }
 
 .dialogue-prompt {
     display: block;
     text-align: right;
-    font-size: 12px;
-    color: var(--text-secondary);
-}
-
-/* --- Inventory Screen Styles --- */
-.inventory-screen {
-    display: none;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 95%;
-    max-width: 1000px; /* Wider */
-    height: 90%;
-    max-height: 700px; /* Taller */
-    background-color: rgba(30, 30, 50, 0.97); /* Slightly less transparent */
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 25px;
-    color: var(--text-primary);
-    z-index: 20;
-    box-sizing: border-box;
-    display: none; /* Ensure hidden */
-    /* Use Grid for overall layout - display property set by JS (flex) */
-    /* display: grid; */ /* REMOVED - This was overriding display: none */
-    grid-template-columns: 1fr 250px; /* Inventory/Equip | Details */
-    grid-template-rows: auto 1fr auto; /* Header | Content | Footer */
-    gap: 20px;
-    box-shadow: var(--box-shadow);
-}
-
-.inventory-screen h2 { /* Main Title */
-    grid-column: 1 / -1; /* Span both columns */
-    text-align: center;
-    margin-bottom: 15px;
-    color: var(--accent-primary);
-    font-size: 1.5em;
-}
-
-.equipment-section {
-    grid-column: 1 / 2;
-    grid-row: 2 / 3;
-    border: 1px solid var(--border-color);
-    padding: 15px;
-    border-radius: var(--border-radius);
-    background-color: var(--bg-secondary);
-}
-
-/* Remove old flexbox style */
-/* .equip-slots { ... } */
-
-/* New Grid Container for Equipment */
-.equip-grid-container {
-    display: grid;
-    grid-template-columns: repeat(4, 80px); /* 4 columns, fixed size */
-    grid-template-rows: repeat(3, 90px);    /* 3 rows, fixed size */
-    gap: 15px;
-    justify-content: center; /* Center the grid */
-    align-content: center;   /* Center the grid items vertically */
+    font-size: 0.8em;
+    color: #aaa;
     margin-top: 10px;
-    padding: 10px; /* Add some padding around the grid */
 }
 
-.equip-grid-slot {
-    border: 1px dashed var(--border-color);
-    /* min-height: 85px; Remove fixed min-height, rely on grid row size */
+/* --- Inventory Screen --- */
+.inventory-screen {
+    /* Uses .overlay styles */
+    align-items: flex-start; /* Align content to top */
+    padding-top: 5%;
+}
+
+.inventory-content {
+    background-color: #2a2a3a;
+    border: 2px solid #4a4a6e;
+    border-radius: 8px;
+    padding: 20px;
+    width: 90%;
+    max-width: 850px; /* Adjust as needed */
+    max-height: 85vh;
+    overflow-y: auto;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 8px;
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.5);
+}
+
+.inventory-content h2 {
     text-align: center;
+    margin-top: 0;
 }
 
-.slot-label {
-    font-size: 11px;
-    color: var(--text-secondary);
-    margin-bottom: 5px;
-}
-
-.item-display { /* Used inside equip slots */
-    width: 50px;
-    height: 50px;
-    background-color: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-color);
+.inventory-main {
     display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 10px;
-    overflow: hidden;
-    text-align: center;
-    border-radius: 4px;
-    color: var(--text-primary); /* Make text visible */
-}
-.item-display .inventory-item { /* Style item if it's inside */
-    border: none;
-    background: none;
-    width: 100%;
-    height: 100%;
+    gap: 20px;
+    margin-bottom: 20px;
+    flex-grow: 1; /* Allow sections to grow */
 }
 
-
-.inventory-section {
-    grid-column: 1 / 2;
-    grid-row: 3 / 4; /* Below equipment */
-    border: 1px solid var(--border-color);
+.equipment-section, .inventory-section {
+    flex: 1; /* Share space */
+    background-color: #3a3a4a;
     padding: 15px;
-    border-radius: var(--border-radius);
-    background-color: var(--bg-secondary);
-    overflow-y: auto; /* Scroll if needed */
-    min-height: 200px; /* Ensure it has some height */
+    border-radius: 5px;
+    border: 1px solid #5a5a6a;
+}
+
+.equipment-section h3, .inventory-section h3 {
+    margin-top: 0;
+    text-align: center;
+    border-bottom: 1px solid #5a5a6a;
+    padding-bottom: 8px;
+    margin-bottom: 15px;
+}
+
+.equip-grid-container, .inventory-grid {
+    display: grid;
+    gap: 10px;
+}
+
+.equip-grid-container {
+    grid-template-columns: repeat(4, 1fr); /* 4 columns for equipment */
 }
 
 .inventory-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(55px, 1fr)); /* Slightly larger items */
-    gap: 12px;
-    margin-top: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); /* Responsive grid */
+    min-height: 200px; /* Ensure inventory has some height */
 }
 
-.inventory-item {
-    width: 55px;
-    height: 55px;
-    border: 1px solid var(--border-color);
-    background-color: var(--bg-tertiary);
-    position: relative;
-    cursor: pointer;
+.equip-grid-slot, .inventory-item {
+    background-color: #2a2a3a;
+    border: 1px solid #5a5a6a;
+    border-radius: 4px;
+    min-height: 60px;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-size: 11px;
-    overflow: hidden;
+    padding: 5px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.equip-grid-slot:hover, .inventory-item:hover {
+    background-color: #4a4a6a;
+    border-color: #7a7a9e;
+}
+
+.slot-label {
+    font-size: 0.7em;
+    color: #aaa;
+    position: absolute;
+    top: 3px;
+    left: 5px;
+}
+
+.item-display {
+    /* Styles for item icon/name within the slot */
+    font-size: 0.8em;
     text-align: center;
-    border-radius: 4px;
-    transition: transform 0.1s ease, border-color 0.2s ease;
-    color: var(--text-primary);
+    color: #fff;
 }
-
-.inventory-item:hover {
-    border-color: var(--accent-secondary);
-    transform: scale(1.05);
+.item-display img {
+    max-width: 32px; /* Adjust if using icons */
+    max-height: 32px;
+    margin-bottom: 3px;
 }
-
 .item-quantity {
     position: absolute;
-    bottom: 3px;
-    right: 3px;
-    background-color: rgba(0, 0, 0, 0.8);
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.8em;
+    background-color: rgba(0, 0, 0, 0.7);
     color: #fff;
-    font-size: 10px;
-    padding: 2px 4px;
+    padding: 1px 3px;
     border-radius: 3px;
 }
 
+
 .item-details-section {
-    grid-column: 2 / 3; /* Right column */
-    grid-row: 2 / 4; /* Span equipment and inventory rows */
-    border: 1px solid var(--border-color);
-    padding: 20px;
-    border-radius: var(--border-radius);
-    background-color: var(--bg-secondary);
-    text-align: center;
-    display: flex;
-    flex-direction: column;
+    background-color: #3a3a4a;
+    padding: 15px;
+    border-radius: 5px;
+    border: 1px solid #5a5a6a;
+    margin-top: 15px; /* Space above details */
+    min-height: 100px;
 }
+
 .item-details-section h3 {
-    color: var(--accent-primary);
-    margin-bottom: 15px;
+    margin-top: 0;
+    text-align: center;
 }
 
 #selectedItemStats, #selectedItemUpgradeInfo {
-    margin: 10px 0;
-    font-size: 13px;
-    color: var(--text-secondary);
-    text-align: left; /* Align details left */
-    line-height: 1.7;
-}
-#selectedItemStats span, #selectedItemUpgradeInfo span {
-    color: var(--text-primary); /* Make values stand out */
-    font-weight: 600;
+    font-size: 0.9em;
+    margin-bottom: 10px;
+    line-height: 1.5;
 }
 
-/* Container for item action buttons */
 .item-actions {
     display: flex;
-    gap: 10px; /* Space between buttons */
-    margin-top: auto; /* Push container to bottom */
-    justify-content: center; /* Center buttons horizontally */
-    width: 100%; /* Ensure container takes full width */
-}
-
-/* Shared styles for action buttons */
-#equipItemBtn,
-#upgradeItemBtn {
-    padding: 10px 15px;
-    cursor: pointer;
-    border: none;
-    color: white;
-    border-radius: 4px;
-    font-weight: 600;
-    transition: background-color 0.2s ease;
-    flex-grow: 1; /* Allow buttons to share space */
-}
-
-/* Specific button colors */
-#equipItemBtn {
-    background-color: var(--accent-secondary); /* Blue */
-    color: var(--bg-primary);
-}
-#upgradeItemBtn {
-    background-color: var(--success-color); /* Green */
-    /* margin-top: auto; REMOVED - Handled by container */
-}
-
-/* Disabled state for both buttons */
-#equipItemBtn:disabled,
-#upgradeItemBtn:disabled {
-    background-color: #555;
-    color: #999;
-    cursor: not-allowed;
-}
-
-/* Hover states for enabled buttons */
-#equipItemBtn:not(:disabled):hover {
-    background-color: #4fc3f7; /* Lighter blue */
-}
-#upgradeItemBtn:not(:disabled):hover {
-    background-color: #388E3C; /* Darker green */
-}
-
-#upgradeItemBtn:disabled {
-    background-color: #555;
-    color: #999;
-    cursor: not-allowed;
-}
-
-#upgradeItemBtn:not(:disabled):hover {
-    background-color: #388E3C; /* Darker green */
-}
-
-#closeInventoryBtn {
-    grid-column: 1 / -1; /* Span both columns */
-    grid-row: 4 / 5; /* Bottom row */
+    justify-content: center;
+    gap: 15px;
     margin-top: 15px;
-    padding: 10px 20px;
-    cursor: pointer;
-    background-color: var(--bg-tertiary);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    border-radius: 4px;
-    justify-self: center; /* Center button */
-    transition: background-color 0.2s ease;
-}
-#closeInventoryBtn:hover {
-    background-color: var(--accent-secondary);
-    color: var(--bg-primary);
 }
 
-
-/* Style for selected item in grid */
-.inventory-item.selected {
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 8px var(--accent-primary);
-    transform: scale(1.05);
-}
-
-/* --- Authentication Form Styles --- */
-.auth-forms {
+.close-button {
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    border-radius: var(--border-radius);
-    padding: 30px 40px;
-    color: var(--text-primary);
-    z-index: 30;
-    width: 90%;
-    max-width: 400px;
-    text-align: center;
-    box-shadow: var(--box-shadow);
-}
-
-.auth-form {
-    display: block;
-    margin-bottom: 15px;
-}
-
-.auth-form h2 {
-    margin-bottom: 25px;
-    color: var(--accent-primary);
-    font-size: 1.4em;
-}
-
-.auth-form input {
-    width: 100%; /* Full width */
-    box-sizing: border-box; /* Include padding in width */
-    padding: 12px;
-    margin-bottom: 15px;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background-color: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 1em;
-}
-
-.auth-form button {
-    width: 100%;
-    padding: 12px 15px;
-    cursor: pointer;
-    background-color: var(--accent-secondary);
+    top: 15px;
+    right: 15px;
+    background: #555;
+    color: #fff;
     border: none;
-    color: var(--bg-primary);
-    border-radius: 4px;
-    font-weight: 600;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 1.2em;
+    line-height: 28px; /* Center the 'X' */
+    text-align: center;
+    cursor: pointer;
+    padding: 0;
+}
+#closeInventoryBtn { /* Specific positioning if needed */
+    top: 25px;
+    right: 25px;
+}
+.close-button:hover {
+    background: #777;
+}
+
+
+/* --- Stat Allocation Modal --- */
+.modal {
+    /* Uses .overlay styles */
+}
+
+.modal-content {
+    background-color: #2a2a3a;
+    padding: 25px 30px;
+    border-radius: 8px;
+    border: 1px solid #4a4a6e;
+    position: relative; /* For close button positioning */
+    width: auto;
+    min-width: 350px;
+    max-width: 500px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+}
+
+.modal-content h2 {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.stat-allocation-grid {
+    display: grid;
+    grid-template-columns: auto 1fr auto; /* Label | Value | Button */
+    gap: 10px 15px; /* Row gap | Column gap */
+    align-items: center;
+}
+
+.stat-line span:first-child { /* Stat Label */
+    text-align: right;
+    font-weight: bold;
+    color: #ccc;
+}
+.stat-line span:nth-child(2) { /* Stat Value */
+    text-align: center;
+    font-size: 1.1em;
+}
+
+.modal-stat-button {
     font-size: 1em;
-    transition: background-color 0.2s ease;
+    padding: 3px 8px;
+    line-height: 1; /* Adjust for '+' alignment */
 }
 
-.auth-form button:hover {
-    background-color: #4fc3f7; /* Lighter blue */
+#closeStatModalBtn { /* Position close button inside modal */
+   /* Uses .close-button styles */
+   top: 10px;
+   right: 10px;
 }
 
-.auth-form p {
-    margin-top: 20px;
-    font-size: 0.9em;
-    color: var(--text-secondary);
+/* --- Utility Classes --- */
+.hidden {
+    display: none !important; /* Force hide */
 }
 
-.auth-form a {
-    color: var(--accent-secondary);
-    text-decoration: none;
-    font-weight: 600;
-}
-
-.auth-form a:hover {
-    text-decoration: underline;
-}
-
-.auth-message {
-    margin-top: 15px;
-    color: var(--error-color);
-    font-size: 0.9em;
-    min-height: 1.2em; /* Reserve space */
-}
+/* Add specific item rarity colors if needed */
+.item-common { border-left: 3px solid #ffffff; }
+.item-uncommon { border-left: 3px solid #1eff00; }
+.item-rare { border-left: 3px solid #0070dd; }
+.item-epic { border-left: 3px solid #a335ee; }
+.item-legendary { border-left: 3px solid #ff8000; }

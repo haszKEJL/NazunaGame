@@ -26,31 +26,32 @@ const TR = TILE_TREE; // Alias for Tree
 const ST = TILE_STONE; // Alias for Stone
 
 // --- Map Definitions ---
-const dungeonMap = [ // 25x19 - Using Aliases
-    [WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL], // Row 0
-    [WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL], // Row 1 (Exit at [1][12])
-    //                                            ^-- Dungeon Exit Tile (12, 1)
-    [WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL], // Row 2
-    [WL, FL, WL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, WL, FL, WL], // Row 3
-    [WL, FL, WL, FL, WL, WL, WL, FL, WL, WL, WL, WL, WL, WL, WL, FL, WL, FL, WL, WL, WL, FL, WL, FL, WL], // Row 4
-    [WL, FL, FL, FL, WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL, FL, WL, FL, FL, FL, FL, FL, WL], // Row 5
-    [WL, FL, WL, FL, WL, FL, WL, WL, WL, WL, WL, FL, WL, WL, WL, WL, WL, FL, WL, FL, WL, WL, WL, FL, WL], // Row 6
-    [WL, FL, WL, FL, WL, FL, WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL, FL, WL, FL, FL, FL, WL, FL, WL], // Row 7
-    [WL, FL, WL, FL, WL, FL, WL, FL, WL, WL, WL, WL, WL, WL, WL, FL, WL, FL, WL, WL, WL, FL, WL, FL, WL], // Row 8
-    [WL, FL, FL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL], // Row 9
-    [WL, WL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, WL, WL, FL, WL, WL, WL, WL, WL], // Row 10
-    [WL, FL, FL, FL, FL, FL, WL, FL, FL, FL, WL, FL, FL, FL, WL, FL, FL, FL, WL, FL, FL, FL, FL, FL, WL], // Row 11
-    [WL, FL, WL, WL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL], // Row 12
-    [WL, FL, FL, FL, FL, FL, FL, FL, WL, FL, FL, FL, WL, FL, FL, FL, WL, FL, FL, FL, FL, FL, FL, FL, WL], // Row 13
-    [WL, FL, WL, WL, WL, FL, WL, WL, WL, FL, WL, FL, WL, FL, WL, WL, WL, FL, WL, WL, WL, WL, WL, FL, WL], // Row 14
-    [WL, FL, WL, FL, FL, FL, FL, FL, FL, FL, WL, FL, WL, FL, FL, FL, FL, FL, WL, FL, FL, FL, WL, FL, WL], // Row 15
-    [WL, FL, WL, FL, WL, WL, WL, WL, WL, WL, WL, FL, WL, WL, WL, WL, WL, WL, WL, FL, WL, FL, WL, FL, WL], // Row 16
-    [WL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, FL, WL, FL, FL, FL, WL], // Row 17
-    [WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL, WL]  // Row 18
-];
+
+// Function to generate a simple dungeon map with border walls
+function generateDungeonMap(width, height) {
+    const map = [];
+    for (let y = 0; y < height; y++) {
+        map[y] = [];
+        for (let x = 0; x < width; x++) {
+            if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
+                map[y][x] = WL; // Wall border
+            } else {
+                map[y][x] = FL; // Floor inside
+            }
+        }
+    }
+    // Place exit explicitly (e.g., near top center)
+    const exitX = Math.floor(width / 2);
+    map[1][exitX] = FL; // Ensure exit tile is floor
+    // You might want a specific marker tile later, but floor works for now
+    console.log(`Generated dungeon map ${width}x${height}. Exit at (${exitX}, 1)`);
+    return map;
+}
+
+const dungeonMap = generateDungeonMap(25, 19); // Generate a 25x19 dungeon
 
 // World Map - Expanded to 64x64
-// --- Define Large World Map (64x64) with Biomes ---
+// --- Define Large World Map (64x64) with Biomes and Border Walls ---
 const WORLD_MAP_SIZE = 64;
 const largeWorldMap = [];
 
@@ -64,7 +65,12 @@ const endY = startY + centerSize;
 for (let y = 0; y < WORLD_MAP_SIZE; y++) {
     largeWorldMap[y] = [];
     for (let x = 0; x < WORLD_MAP_SIZE; x++) {
-        if (x < startX) { // West: Mountain
+        // Add Border Walls First
+        if (x === 0 || x === WORLD_MAP_SIZE - 1 || y === 0 || y === WORLD_MAP_SIZE - 1) {
+            largeWorldMap[y][x] = WL;
+        }
+        // Then define biomes within the borders
+        else if (x < startX) { // West: Mountain
             largeWorldMap[y][x] = MT;
         } else if (x >= endX) { // East: Desert
             largeWorldMap[y][x] = DS;
@@ -102,20 +108,56 @@ largeWorldMap[startY + 5][startX + 10] = CE; // City in Grass
 largeWorldMap[10][10] = DE; // Dungeon in Mountains (NW)
 
 
-// --- City Map Definition ---
-const cityMap = [ // 20x11 - Using Aliases
-    [BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL], // Row 0
-    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL], // Row 1
-    [BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL], // Row 2
-    [BL, RD, BL, DR, BL, RD, BL, DR, BL, RD, BL, DR, BL, RD, BL, DR, BL, BL, RD, BL], // Row 3
-    [BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL], // Row 4
-    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL], // Row 5
-    [BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL], // Row 6
-    [BL, RD, BL, DR, BL, RD, BL, DR, BL, DR, BL, DR, BL, RD, BL, DR, BL, BL, RD, BL], // Row 7
-    [BL, RD, BL, BL, BL, RD, BL, BL, BL, BL, BL, BL, BL, RD, BL, BL, BL, BL, RD, BL], // Row 8
-    [BL, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, RD, BL], // Row 9
-    [BL, BL, BL, BL, BL, BL, BL, BL, BL, DR, BL, BL, BL, BL, BL, BL, BL, BL, BL, BL]  // Row 10 (Exit Door at [10][9])
-];
+// --- City Map Definition with Border Walls ---
+const CITY_WIDTH = 20;
+const CITY_HEIGHT = 11;
+const cityMap = [];
+
+for (let y = 0; y < CITY_HEIGHT; y++) {
+    cityMap[y] = [];
+    for (let x = 0; x < CITY_WIDTH; x++) {
+        // Border Walls
+        if (x === 0 || x === CITY_WIDTH - 1 || y === 0 || y === CITY_HEIGHT - 1) {
+            cityMap[y][x] = WL;
+        } else {
+            // Default to Road inside borders
+            cityMap[y][x] = RD;
+        }
+    }
+}
+
+// Add some simple buildings (replace road tiles)
+// Example: Two rows of buildings near the top
+for (let y = 2; y <= 4; y++) {
+    for (let x = 2; x < CITY_WIDTH - 2; x += 4) { // Place buildings with gaps
+        cityMap[y][x] = BL;
+        cityMap[y][x+1] = BL;
+        cityMap[y+1][x] = BL; // Make them 2x2 blocks
+        cityMap[y+1][x+1] = BL;
+        // Add a door below the building block
+        if (y + 2 < CITY_HEIGHT -1) { // Ensure door isn't on the border wall
+             cityMap[y+2][x] = DR;
+        }
+    }
+}
+// Example: Buildings near the bottom
+for (let y = CITY_HEIGHT - 5; y <= CITY_HEIGHT - 3; y++) {
+     for (let x = 3; x < CITY_WIDTH - 3; x += 5) {
+         cityMap[y][x] = BL;
+         cityMap[y][x+1] = BL;
+         cityMap[y+1][x] = BL;
+         cityMap[y+1][x+1] = BL;
+         // Add door above
+         if (y - 1 > 0) { // Ensure door isn't on the border wall
+             cityMap[y-1][x] = DR;
+         }
+     }
+}
+
+
+// Place the exit door explicitly on the bottom border wall
+const cityExitX = Math.floor(CITY_WIDTH / 2);
+cityMap[CITY_HEIGHT - 1][cityExitX] = DR; // Place door on the wall tile
 
 // --- Current Map State ---
 let currentMapId = 'world'; // Start on the large world map
@@ -161,10 +203,10 @@ export function getDefaultStartCoords(mapId) {
             break;
         case 'dungeon':
             mapData = dungeonMap;
-            // Find the entrance tile (assuming it's defined, e.g., TILE_FLOOR at a specific spot)
-            // For now, use default top-left start
-            startTileX = 1;
-            startTileY = 1;
+            // Start player near the exit (which is now floor)
+            const dungeonExitX = Math.floor(mapData[0].length / 2);
+            startTileX = dungeonExitX;
+            startTileY = 2; // Start below the exit tile
             break;
         default:
             console.warn("Unknown map ID for default coords:", mapId);
@@ -260,7 +302,7 @@ export function drawMap(ctx) {
                         tileColor = '#666'; // Dark grey for floor
                         break;
                     case TILE_WALL:
-                        tileColor = '#BBB'; // Light grey for walls
+                        tileColor = '#000000'; // Black for walls
                         break;
                     case TILE_GRASS:
                         tileColor = '#2E8B57'; // SeaGreen for grass

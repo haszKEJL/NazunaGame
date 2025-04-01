@@ -5,163 +5,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Nazuna's Night Out</title>
     <link rel="stylesheet" href="style.css">
+    <!-- Consider adding a game-like font from Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Roboto&display=swap" rel="stylesheet">
 </head>
 <body>
-    <h1>Nazuna's Night Out</h1>
-    <div class="game-container">
-        <canvas id="gameCanvas" width="800" height="608" tabindex="0"></canvas> <!-- Added tabindex="0" -->
-        <div id="uiContainer">
-            <!-- UI Stats will be loaded here by ui.js -->
-            Loading UI...
+    <div class="game-wrapper">
+
+        <!-- Login/Register Forms (Overlay) -->
+        <div id="authForms" class="auth-forms overlay">
+            <div id="registerForm" class="auth-form">
+                <h2>Register</h2>
+                <input type="text" id="registerUsername" placeholder="Username">
+                <input type="password" id="registerPassword" placeholder="Password">
+                <button id="registerBtn">Register</button>
+                <p>Already have an account? <a href="#" id="showLoginLink">Login</a></p>
+                <div id="registerMessage" class="auth-message"></div>
+            </div>
+
+            <div id="loginForm" class="auth-form" style="display: none;">
+                <h2>Login</h2>
+                <input type="text" id="loginUsername" placeholder="Username">
+                <input type="password" id="loginPassword" placeholder="Password">
+                <button id="loginBtn">Login</button>
+                <p>Need an account? <a href="#" id="showRegisterLink">Register</a></p>
+                <div id="loginMessage" class="auth-message"></div>
+            </div>
         </div>
-        <!-- Dialogue Box (Initially Hidden) -->
-        <div id="dialogueBox" class="dialogue-box">
+
+        <!-- Main Game Area -->
+        <div class="game-area">
+            <canvas id="gameCanvas" width="800" height="608" tabindex="0"></canvas>
+
+            <!-- Main UI Panels Below Canvas -->
+            <div id="main-ui" class="main-ui-panels">
+                <div id="player-stats-panel" class="ui-panel">
+                    <h3>Stats</h3>
+                    <div id="uiStatsContent">Loading Stats...</div>
+                </div>
+                <div id="action-log-panel" class="ui-panel">
+                    <h3>Log</h3>
+                    <div id="uiLogContent">Welcome!</div>
+                </div>
+                <div id="controls-panel" class="ui-panel">
+                    <h3>Controls</h3>
+                    <p>Arrows: Move</p>
+                    <p>Space: Interact</p>
+                    <p>Tab: Inventory</p>
+                    <p>P: Allocate Stats</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dialogue Box (Overlay) -->
+        <div id="dialogueBox" class="dialogue-box overlay">
             <p id="dialogueSpeaker" class="dialogue-speaker"></p>
             <p id="dialogueText" class="dialogue-text"></p>
             <span class="dialogue-prompt">(Space/Enter)</span>
         </div>
-    </div>
 
-    <!-- Inventory/Equipment Screen (Initially Hidden) -->
-    <div id="inventoryScreen" class="inventory-screen">
-        <h2>Inventory & Equipment</h2>
-        <div class="equipment-section">
-            <h3>Wyposażenie</h3> <!-- Changed Title -->
-            <!-- Updated 3x4 Grid Layout for Equipment -->
-            <div class="equip-grid-container">
-                <!-- Row 1 -->
-                <div class="equip-grid-slot" data-slot="special1">
-                    <span class="slot-label">Special 1</span> <!-- Placeholder: Whistle -->
-                    <div id="equipSlotSpecial1" class="item-display"></div>
+        <!-- Inventory/Equipment Screen (Overlay) -->
+        <div id="inventoryScreen" class="inventory-screen overlay">
+            <div class="inventory-content">
+                <h2>Inventory & Equipment</h2>
+                <div class="inventory-main">
+                    <div class="equipment-section">
+                        <h3>Equipment</h3>
+                        <div class="equip-grid-container">
+                            <!-- Simplified Grid - Adjust slots as needed -->
+                            <div class="equip-grid-slot" data-slot="head"><span class="slot-label">Head</span><div id="equipSlotHead" class="item-display"></div></div>
+                            <div class="equip-grid-slot" data-slot="weapon"><span class="slot-label">Weapon</span><div id="equipSlotWeapon" class="item-display"></div></div>
+                            <div class="equip-grid-slot" data-slot="armor"><span class="slot-label">Armor</span><div id="equipSlotArmor" class="item-display"></div></div>
+                            <div class="equip-grid-slot" data-slot="shield"><span class="slot-label">Shield</span><div id="equipSlotShield" class="item-display"></div></div>
+                            <div class="equip-grid-slot" data-slot="boots"><span class="slot-label">Boots</span><div id="equipSlotBoots" class="item-display"></div></div>
+                            <div class="equip-grid-slot" data-slot="necklace"><span class="slot-label">Neck</span><div id="equipSlotNecklace" class="item-display"></div></div>
+                            <div class="equip-grid-slot" data-slot="ring1"><span class="slot-label">Ring 1</span><div id="equipSlotRing1" class="item-display"></div></div>
+                            <div class="equip-grid-slot" data-slot="ring2"><span class="slot-label">Ring 2</span><div id="equipSlotRing2" class="item-display"></div></div>
+                            <!-- Add other relevant slots -->
+                        </div>
+                    </div>
+                    <div class="inventory-section">
+                        <h3>Inventory</h3>
+                        <div id="inventoryGrid" class="inventory-grid">
+                            <!-- Inventory items populated by ui.js -->
+                        </div>
+                    </div>
                 </div>
-                <div class="equip-grid-slot" data-slot="head">
-                    <span class="slot-label">Head</span> <!-- Placeholder: Hat -->
-                    <div id="equipSlotHead" class="item-display"></div>
-                </div>
-                <div class="equip-grid-slot" data-slot="portrait">
-                    <span class="slot-label">Portrait</span> <!-- Placeholder: Character -->
-                    <div id="equipSlotPortrait" class="item-display"></div>
-                </div>
-                 <div class="equip-grid-slot" data-slot="body">
-                    <span class="slot-label">Body</span> <!-- Placeholder: Jacket -->
-                    <div id="equipSlotBody" class="item-display"></div>
-                </div>
-                <!-- Row 2 -->
-                <div class="equip-grid-slot" data-slot="weapon">
-                    <span class="slot-label">Weapon</span> <!-- Placeholder: Sword -->
-                    <div id="equipSlotWeapon" class="item-display"></div>
-                </div>
-                <div class="equip-grid-slot" data-slot="armor">
-                    <span class="slot-label">Armor</span> <!-- Placeholder: Shirt -->
-                    <div id="equipSlotArmor" class="item-display"></div>
-                </div>
-                 <div class="equip-grid-slot" data-slot="ranged">
-                    <span class="slot-label">Ranged</span> <!-- Placeholder: Rifle -->
-                    <div id="equipSlotRanged" class="item-display"></div>
-                </div>
-                 <div class="equip-grid-slot" data-slot="mount">
-                    <span class="slot-label">Mount</span> <!-- Placeholder: Camel -->
-                    <div id="equipSlotMount" class="item-display"></div>
-                </div>
-                <!-- Row 3 -->
-                 <div class="equip-grid-slot" data-slot="belt">
-                    <span class="slot-label">Belt</span> <!-- Placeholder: Belt -->
-                    <div id="equipSlotBelt" class="item-display"></div>
-                </div>
-                 <div class="equip-grid-slot" data-slot="special2">
-                    <span class="slot-label">Special 2</span> <!-- Placeholder: Ball -->
-                    <div id="equipSlotSpecial2" class="item-display"></div>
-                </div>
-                 <div class="equip-grid-slot" data-slot="legs">
-                    <span class="slot-label">Legs</span> <!-- Placeholder: Shorts -->
-                    <div id="equipSlotLegs" class="item-display"></div>
-                </div>
-                 <div class="equip-grid-slot" data-slot="feet">
-                    <span class="slot-label">Feet</span> <!-- Placeholder: Shoes -->
-                    <div id="equipSlotFeet" class="item-display"></div>
+                <div class="item-details-section">
+                    <h3 id="selectedItemName">Select an Item</h3>
+                    <div id="selectedItemStats"></div>
+                    <div id="selectedItemUpgradeInfo"></div>
+                    <div class="item-actions">
+                        <button id="equipItemBtn" disabled>Equip</button>
+                        <button id="upgradeItemBtn" disabled>Upgrade</button>
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="inventory-section">
-            <h3>Inventory</h3>
-            <div id="inventoryGrid" class="inventory-grid">
-                <!-- Inventory items will be populated here by ui.js -->
-            </div>
-        </div>
-        <!-- Item Details & Upgrade Section -->
-        <div class="item-details-section">
-            <h3 id="selectedItemName">Select an Item</h3>
-            <div id="selectedItemStats"></div>
-            <div id="selectedItemUpgradeInfo"></div>
-            <div class="item-actions"> <!-- Added container for buttons -->
-                <button id="equipItemBtn" disabled>Equip</button>
-                <button id="upgradeItemBtn" disabled>Upgrade</button>
-            </div>
-        </div>
-        <button id="closeInventoryBtn">Close (Tab)</button>
-    </div>
-
-    <!-- Login/Register Forms (Initially Hidden) -->
-    <div id="authForms" class="auth-forms">
-        <div id="registerForm" class="auth-form">
-            <h2>Register</h2>
-            <input type="text" id="registerUsername" placeholder="Username">
-            <input type="password" id="registerPassword" placeholder="Password">
-            <button id="registerBtn">Register</button>
-            <p>Already have an account? <a href="#" id="showLoginLink">Login</a></p>
-            <div id="registerMessage" class="auth-message"></div>
+            <button id="closeInventoryBtn" class="close-button">Close (Tab)</button>
         </div>
 
-        <div id="loginForm" class="auth-form" style="display: none;">
-            <h2>Login</h2>
-            <input type="text" id="loginUsername" placeholder="Username">
-            <input type="password" id="loginPassword" placeholder="Password">
-            <button id="loginBtn">Login</button>
-            <p>Need an account? <a href="#" id="showRegisterLink">Register</a></p>
-            <div id="loginMessage" class="auth-message"></div>
+        <!-- Stat Allocation Modal (Overlay) -->
+        <div id="statModal" class="modal overlay">
+            <div class="modal-content">
+                <span id="closeStatModalBtn" class="close-button">&times;</span>
+                <h2>Allocate Stat Points</h2>
+                <p>Points Remaining: <span id="modalPointsRemaining">0</span></p>
+                <div class="stat-allocation-grid">
+                    <div class="stat-line"><span>Strength:</span><span id="modalStatStr">0</span><button class="modal-stat-button" data-stat="strength">+</button></div>
+                    <div class="stat-line"><span>Dexterity:</span><span id="modalStatDex">0</span><button class="modal-stat-button" data-stat="dexterity">+</button></div>
+                    <div class="stat-line"><span>Constitution:</span><span id="modalStatCon">0</span><button class="modal-stat-button" data-stat="constitution">+</button></div>
+                    <div class="stat-line"><span>Intelligence:</span><span id="modalStatInt">0</span><button class="modal-stat-button" data-stat="intelligence">+</button></div>
+                    <div class="stat-line"><span>Agility:</span><span id="modalStatAgi">0</span><button class="modal-stat-button" data-stat="agility">+</button></div>
+                </div>
+            </div>
         </div>
-    </div>
 
-    <!-- Stat Allocation Modal -->
-    <div id="statModal" class="modal">
-        <div class="modal-content">
-            <h2>Allocate Stat Points</h2>
-            <p>Points Remaining: <span id="modalPointsRemaining">0</span></p>
-            <div class="stat-line">
-                <span>Strength:</span>
-                <span id="modalStatStr">0</span>
-                <button class="modal-stat-button" data-stat="strength">+</button>
-            </div>
-            <div class="stat-line">
-                <span>Dexterity:</span>
-                <span id="modalStatDex">0</span>
-                <button class="modal-stat-button" data-stat="dexterity">+</button>
-            </div>
-            <div class="stat-line">
-                <span>Constitution:</span>
-                <span id="modalStatCon">0</span>
-                <button class="modal-stat-button" data-stat="constitution">+</button>
-            </div>
-            <div class="stat-line">
-                <span>Intelligence:</span>
-                <span id="modalStatInt">0</span>
-                <button class="modal-stat-button" data-stat="intelligence">+</button>
-            </div>
-            <div class="stat-line">
-                <span>Agility:</span>
-                <span id="modalStatAgi">0</span>
-                <button class="modal-stat-button" data-stat="agility">+</button>
-            </div>
-            <button id="closeStatModalBtn">Close</button>
-        </div>
-    </div>
+    </div> <!-- End game-wrapper -->
 
-    <!-- UI Script (module) -->
+    <!-- Scripts -->
     <script type="module" src="ui.js"></script>
-
-    <!-- Main game script (module) -->
     <script type="module" src="game.js"></script>
-    <!-- Load Authentication Logic (Module) -->
     <script type="module" src="auth.js"></script>
 </body>
 </html>
