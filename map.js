@@ -1,8 +1,10 @@
 // Import new biome tiles
+// Import new biome tiles
 import {
     TILE_SIZE, TILE_FLOOR, TILE_WALL, TILE_GRASS, TILE_WATER,
     TILE_CITY_ENTRANCE, TILE_ROAD, TILE_BUILDING, TILE_DOOR, TILE_DUNGEON_ENTRANCE,
-    TILE_FOREST, TILE_MOUNTAIN, TILE_DESERT, TILE_SWAMP // Added biome tiles
+    TILE_FOREST, TILE_MOUNTAIN, TILE_DESERT, TILE_SWAMP,
+    TILE_TREE, TILE_STONE // Added obstacles
 } from './config.js';
 // import { tileset, areAssetsLoaded } from './assets.js'; // No longer needed for drawing map
 
@@ -20,6 +22,8 @@ const FO = TILE_FOREST;
 const MT = TILE_MOUNTAIN;
 const DS = TILE_DESERT;
 const SW = TILE_SWAMP;
+const TR = TILE_TREE; // Alias for Tree
+const ST = TILE_STONE; // Alias for Stone
 
 // --- Map Definitions ---
 const dungeonMap = [ // 25x19 - Using Aliases
@@ -68,8 +72,14 @@ for (let y = 0; y < WORLD_MAP_SIZE; y++) {
             largeWorldMap[y][x] = FO;
         } else if (y >= endY) { // South: Swamp
             largeWorldMap[y][x] = SW;
-        } else { // Center: Grass
+        } else { // Center: Grass - Add obstacles here
+            // Place grass first
             largeWorldMap[y][x] = GR;
+            // Add random trees and stones on top of grass (adjust probability)
+            const obstacleChance = 0.08; // 8% chance for an obstacle
+            if (Math.random() < obstacleChance) {
+                largeWorldMap[y][x] = Math.random() < 0.6 ? TR : ST; // 60% tree, 40% stone
+            }
         }
     }
 }
@@ -285,6 +295,13 @@ export function drawMap(ctx) {
                         break;
                     case TILE_SWAMP:
                         tileColor = '#556B2F'; // DarkOliveGreen for swamp
+                        break;
+                    // Add new obstacle colors
+                    case TILE_TREE:
+                        tileColor = '#228B22'; // ForestGreen for trees
+                        break;
+                    case TILE_STONE:
+                        tileColor = '#708090'; // SlateGray for stones
                         break;
                     default:
                         tileColor = '#FF00FF'; // Magenta for unknown/error

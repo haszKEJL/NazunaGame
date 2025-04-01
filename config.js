@@ -24,6 +24,8 @@ export const TILE_FOREST = 9;
 export const TILE_MOUNTAIN = 10;
 export const TILE_DESERT = 11;
 export const TILE_SWAMP = 12;
+export const TILE_TREE = 13; // New tile type for trees
+export const TILE_STONE = 14; // New tile type for stones
 
 // Combat Constants
 export const BASE_HIT_CHANCE = 0.85; // 85% base chance to hit
