@@ -261,10 +261,10 @@ function respawnEnemiesIfNeeded(mapId) {
 
 
 // Function to get players on a specific map
-    let enemyConfig = [];
-    let levelRange = { min: 1, max: 3 };
-    // Simplified map dimensions (replace with actual map data later if needed)
-    const mapCols = 50;
+let enemyConfig = [];
+let levelRange = { min: 1, max: 3 };
+// Simplified map dimensions (replace with actual map data later if needed)
+const mapCols = 50;
     const mapRows = 50;
 
     switch (mapId) {
