@@ -36,7 +36,7 @@ import {
     showInventory, hideInventory // Add inventory functions (will be added to ui.js)
 } from './ui.js';
 import './auth.js'; // Import auth.js to handle login/register
-import { io } from "socket.io-client"; // Import Socket.IO client library
+// Socket.IO client library is now loaded globally via index.html
 
 // --- Canvas Setup ---
 const canvas = document.getElementById('gameCanvas');
@@ -910,7 +910,7 @@ function initializeSocketConnection() {
     // Ensure this runs *after* player is authenticated and has basic data
     const serverUrl = `http://${window.location.hostname}:5001`; // Dynamically use hostname
     console.log(`Attempting to connect to Socket.IO server at ${serverUrl}`);
-    socket = io(serverUrl);
+    socket = io(serverUrl); // io() is now globally available from the script loaded in index.html
 
     socket.on('connect', () => {
         console.log('Connected to game server with ID:', socket.id);
