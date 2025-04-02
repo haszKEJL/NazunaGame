@@ -155,7 +155,7 @@ function checkCombatEnd() {
     return false;
 }
 
-function nextTurn() {
+export function nextTurn() { // Added export keyword
     if (combatEnded) return;
     isPlayerTurn = !isPlayerTurn;
     playerActionSelected = false; // Reset flag for player's next turn
