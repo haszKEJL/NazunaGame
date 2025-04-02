@@ -10,6 +10,12 @@ let combatMessageLog = [];
 let combatEnded = false;
 let playerActionSelected = false; // Flag to prevent multiple actions per turn
 
+// --- Animation State ---
+export let isAnimating = false;
+export let animatingCharacter = null; // 'player' or 'enemy'
+export let animationProgress = 0; // 0 to 1
+const ANIMATION_SPEED = 0.05; // Controls how fast animation progresses per frame
+
 // --- Combat Calculation --- (Keep calculateHitChance)
 function calculateHitChance(attackerDex, defenderDex) {
     const dexDifference = attackerDex - defenderDex;
@@ -36,6 +42,13 @@ export function getCombatLog() {
 function playerAttack() {
     if (!currentEnemy) return;
     addCombatLog("Player attacks!");
+
+    // Start animation
+    isAnimating = true;
+    animatingCharacter = 'player';
+    animationProgress = 0;
+
+    // Calculate damage immediately
     const playerDex = player.dexterity + getStatBonus('dexterity');
     const playerHitChance = calculateHitChance(playerDex, currentEnemy.dexterity);
 
@@ -57,6 +70,13 @@ function playerAttack() {
 function enemyAttack() {
     if (!currentEnemy || combatEnded) return;
     addCombatLog(`${currentEnemy.type} (Lvl ${currentEnemy.level}) attacks!`); // Added level display
+
+    // Start animation
+    isAnimating = true;
+    animatingCharacter = 'enemy';
+    animationProgress = 0;
+
+    // Calculate damage immediately
     const playerDex = player.dexterity + getStatBonus('dexterity');
     const enemyHitChance = calculateHitChance(currentEnemy.dexterity, playerDex);
 
@@ -143,10 +163,8 @@ function nextTurn() {
 
     if (!isPlayerTurn) {
         // Simple enemy AI: just attack
-        // Add a small delay for better pacing (optional)
-        setTimeout(enemyAttack, 500); // Enemy attacks after 500ms
-        // After enemy attacks, switch back to player's turn
-        setTimeout(nextTurn, 1000); // Switch turn after another 500ms (total 1s)
+        enemyAttack(); // Trigger attack (sets animation state, calculates damage)
+        // The turn progression happens after the animation finishes in game.js updateCombat
     }
 }
 
@@ -182,11 +200,10 @@ export function processPlayerAction(action) {
             return combatEnded;
     }
 
-    // If an action was successfully taken (attack), check end and proceed to next turn
-    if (!checkCombatEnd()) {
-         // Delay before switching to enemy turn for pacing
-         setTimeout(nextTurn, 500);
-    }
+    // If an action was successfully taken (attack), check end.
+    // Turn progression will be handled in game.js after animation.
+    checkCombatEnd();
+    // We don't call nextTurn here anymore if animating
 
     return combatEnded;
 }

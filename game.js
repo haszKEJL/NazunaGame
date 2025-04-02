@@ -1,5 +1,5 @@
 import { TILE_SIZE, TILE_FLOOR, TILE_CITY_ENTRANCE, TILE_DOOR, TILE_DUNGEON_ENTRANCE } from './config.js'; // Added TILE_DUNGEON_ENTRANCE
-import { onAssetsLoaded, areAssetsLoaded, playerSprites } from './assets.js';
+import { onAssetsLoaded, areAssetsLoaded, playerSprites, combatBackground } from './assets.js'; // Added combatBackground import
 import { isWalkable, getTileAt, findNearestWalkableTile } from './utils.js'; // Added findNearestWalkableTile
 import {
     drawMap,
@@ -8,7 +8,8 @@ import {
     getMapRows,
     changeMap,
     getCurrentMapId,
-    getDefaultStartCoords // Import the new function
+    getDefaultStartCoords, // Import the new function
+    largeWorldMap // Import the world map data
 } from './map.js';
 import { player, drawPlayer, useItem, equipFirstAvailableItem, initializePlayerStats, savePlayerData, initializePlayerFromData } from './player.js'; // Added savePlayerData and initializePlayerFromData
 import { enemies, drawEnemies, clearEnemies, spawnEnemiesForMap } from './enemy.js'; // Removed initializeEnemies import
@@ -18,7 +19,13 @@ import {
     processPlayerAction,
     isCombatEnded,
     getCurrentCombatEnemy,
-    getCombatLog
+    getCombatLog,
+    // Import animation state from combat.js
+    isAnimating,
+    animatingCharacter,
+    animationProgress,
+    ANIMATION_SPEED,
+    nextTurn // Import nextTurn to call it after animation
 } from './combat.js';
 // Import dialogue and inventory functions from ui.js
 import {
@@ -191,9 +198,9 @@ function handleKeyDown(e) {
     if (gameState === 'overworld' && ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd'].includes(key)) {
          // console.log(`[DEBUG] Adding key to keysPressed: ${key}`); // Reduce noise
          keysPressed[key] = true;
-    } else if (gameState === 'combat' && ['a', 'i', 'f'].includes(key)) { // Check lowercase combat keys
+    } else if (gameState === 'combat' && ['1', '2', '3'].includes(key)) { // Check for 1, 2, 3 in combat
          // Add combat keys to check in updateCombat if needed, though keyup might be sufficient
-         keysPressed[e.key] = true;
+         keysPressed[key] = true; // Use the actual key ('1', '2', '3')
     }
 }
 
@@ -231,15 +238,15 @@ function handleKeyUp(e) {
 
     // --- Clear specific key on keyup ---
     // This handles removing movement and combat action keys when released
-    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', 'i', 'f'].includes(key)) {
+    if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'w', 'a', 's', 'd', '1', '2', '3'].includes(key)) { // Updated combat keys
          delete keysPressed[key];
     }
-    // Special case for combat 'a' (attack) - might need different handling if actions are queued
-    if (gameState === 'combat' && key === 'a') {
+    // Special case for combat '1' (attack) - might need different handling if actions are queued
+    if (gameState === 'combat' && key === '1') {
         delete keysPressed[key];
     }
-    // if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'a', 'A', 'i', 'I', 'f', 'F'].includes(e.key)) {
-    //     delete keysPressed[e.key];
+    // if (!['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', '1', '2', '3'].includes(e.key)) { // Updated combat keys
+    //     delete keysPressed[e.key]; // This general delete might be too broad, stick to specific keys
     // }
 }
 
@@ -549,26 +556,39 @@ function updateCombat() {
         return; // Stop further combat processing
     }
 
-    // Handle Player Input for Combat Actions (Check lowercase keys)
+    // Handle Animation Progression
+    if (isAnimating) {
+        animationProgress += ANIMATION_SPEED;
+        if (animationProgress >= 1) {
+            isAnimating = false;
+            animationProgress = 0;
+            animatingCharacter = null;
+            // Animation finished, now proceed with the next turn
+            nextTurn(); // Call nextTurn from combat.js
+        }
+        return; // Don't process input while animating
+    }
+
+    // Handle Player Input for Combat Actions (Check 1, 2, 3 keys) - Only if not animating
     let playerAction = null;
-    if (keysPressed['a']) {
+    if (keysPressed['1']) {
         playerAction = 'attack';
-        delete keysPressed['a']; // Consume key
-    } else if (keysPressed['i']) {
+        delete keysPressed['1']; // Consume key
+    } else if (keysPressed['2']) {
         playerAction = 'item'; // Placeholder for Item
-        delete keysPressed['i']; // Consume key
-    } else if (keysPressed['f']) {
+        delete keysPressed['2']; // Consume key
+    } else if (keysPressed['3']) {
         playerAction = 'flee'; // Placeholder for Flee
-        delete keysPressed['f']; // Consume key
+        delete keysPressed['3']; // Consume key
     }
     // Add more actions later (Defend?)
 
     if (playerAction) {
-        processPlayerAction(playerAction); // Let combat.js handle the action and turn flow
+        processPlayerAction(playerAction); // Let combat.js handle the action and turn flow (this will set isAnimating)
         // keysPressed = {}; // Don't clear all keys, just the one used
     }
 
-    // Enemy turn logic is handled via setTimeout within combat.js's nextTurn()
+    // Enemy turn logic is now handled via nextTurn() after animation completes
 }
 
 
@@ -625,24 +645,22 @@ function draw() {
     // Always update the HTML UI container (unaffected by canvas translate)
     updateUI();
 
-    // --- Simple Drawing Test (Outside save/restore) ---
-    ctx.fillStyle = 'yellow';
-    ctx.fillRect(10, 10, 50, 50); // Draw a yellow square at top-left
-    ctx.fillStyle = 'white';
-    ctx.font = '12px sans-serif';
-    ctx.fillText(`State: ${gameState}`, 15, 30);
-    ctx.fillText(`Coords: ${player.x},${player.y}`, 15, 50);
-
 }
 
 // Placeholder for drawing the combat screen
 function drawCombatScreen() {
     // --- Draw Combat Background ---
-    const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
-    gradient.addColorStop(0, '#1a1a2e'); // Dark blue at the top
-    gradient.addColorStop(1, '#4a4a6e'); // Lighter purple/blue at the bottom
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    if (combatBackground.complete && combatBackground.naturalWidth > 0) {
+        // Draw the image, scaling it to fit the canvas
+        ctx.drawImage(combatBackground, 0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    } else {
+        // Fallback gradient if image not loaded or invalid
+        const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+        gradient.addColorStop(0, '#1a1a2e'); // Dark blue at the top
+        gradient.addColorStop(1, '#4a4a6e'); // Lighter purple/blue at the bottom
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    }
 
     // --- Set Combat Font ---
     ctx.fillStyle = 'white';
@@ -652,23 +670,42 @@ function drawCombatScreen() {
     const enemy = getCurrentCombatEnemy(); // Get enemy details from combat.js
 
     if (enemy) {
+        // --- Animation Calculations ---
+        let playerOffsetX = 0;
+        let playerOffsetY = 0;
+        let enemyOffsetX = 0;
+        let enemyOffsetY = 0;
+        const moveDistance = 20; // How far the sprite moves
+
+        if (isAnimating) {
+            // Calculate the forward/backward movement based on progress
+            // Uses Math.sin for a simple ease-in/ease-out effect (moves forward then back)
+            const moveAmount = Math.sin(animationProgress * Math.PI) * moveDistance;
+
+            if (animatingCharacter === 'player') {
+                playerOffsetX = moveAmount; // Player moves right
+            } else if (animatingCharacter === 'enemy') {
+                enemyOffsetX = -moveAmount; // Enemy moves left
+            }
+        }
+
         // --- Draw Enemy ---
         if (enemy.sprite && enemy.sprite.complete) {
             const enemyScale = 3.5; // Slightly larger
-            const enemyX = CANVAS_WIDTH * 0.75; // Position more to the right
-            const enemyY = CANVAS_HEIGHT * 0.4; // Position slightly lower
+            const enemyBaseX = CANVAS_WIDTH * 0.75; // Position more to the right
+            const enemyBaseY = CANVAS_HEIGHT * 0.4; // Position slightly lower
             ctx.drawImage(
                 enemy.sprite,
-                enemyX - (TILE_SIZE * enemyScale / 2),
-                enemyY - (TILE_SIZE * enemyScale / 2),
+                enemyBaseX - (TILE_SIZE * enemyScale / 2) + enemyOffsetX, // Apply offset
+                enemyBaseY - (TILE_SIZE * enemyScale / 2) + enemyOffsetY, // Apply offset
                 TILE_SIZE * enemyScale,
                 TILE_SIZE * enemyScale
             );
-            // Draw Enemy HP Bar (Improved Style)
+            // Draw Enemy HP Bar (Improved Style) - Position relative to base position
             const hpBarWidth = 120;
             const hpBarHeight = 12;
-            const hpBarX = enemyX - hpBarWidth / 2;
-            const hpBarY = enemyY + (TILE_SIZE * enemyScale / 2) + 10;
+            const hpBarX = enemyBaseX - hpBarWidth / 2;
+            const hpBarY = enemyBaseY + (TILE_SIZE * enemyScale / 2) + 10;
             const currentHpWidth = Math.max(0, (enemy.hp / enemy.maxHp) * hpBarWidth);
             // Background
             ctx.fillStyle = '#555';
@@ -680,11 +717,11 @@ function drawCombatScreen() {
             ctx.strokeStyle = '#eee';
             ctx.strokeRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
 
-            // Display enemy name, level, and HP (Adjusted position)
+            // Display enemy name, level, and HP (Adjusted position) - Relative to base position
             ctx.fillStyle = 'white';
             ctx.textAlign = 'center';
-            ctx.fillText(`Lvl ${enemy.level} ${enemy.type}`, enemyX, enemyY - (TILE_SIZE * enemyScale / 2) - 20); // Name/Level above sprite
-            ctx.fillText(`HP: ${enemy.hp}/${enemy.maxHp}`, enemyX, hpBarY + hpBarHeight + 15); // HP below bar
+            ctx.fillText(`Lvl ${enemy.level} ${enemy.type}`, enemyBaseX, enemyBaseY - (TILE_SIZE * enemyScale / 2) - 20); // Name/Level above sprite
+            ctx.fillText(`HP: ${enemy.hp}/${enemy.maxHp}`, enemyBaseX, hpBarY + hpBarHeight + 15); // HP below bar
         } else {
              ctx.fillText(`Loading Lvl ${enemy.level} ${enemy.type}...`, CANVAS_WIDTH * 0.75, CANVAS_HEIGHT * 0.4);
         }
@@ -692,19 +729,19 @@ function drawCombatScreen() {
          // --- Draw Player ---
          if (player.sprite && player.sprite.complete) {
             const playerScale = 3; // Slightly larger
-            const playerX = CANVAS_WIDTH * 0.25; // Position more to the left
-            const playerY = CANVAS_HEIGHT * 0.65; // Position slightly lower
+            const playerBaseX = CANVAS_WIDTH * 0.25; // Position more to the left
+            const playerBaseY = CANVAS_HEIGHT * 0.65; // Position slightly lower
             ctx.drawImage(
                 playerSprites.back, // Show player's back in combat
-                playerX - (TILE_SIZE * playerScale / 2),
-                playerY - (TILE_SIZE * playerScale / 2),
+                playerBaseX - (TILE_SIZE * playerScale / 2) + playerOffsetX, // Apply offset
+                playerBaseY - (TILE_SIZE * playerScale / 2) + playerOffsetY, // Apply offset
                 TILE_SIZE * playerScale,
                 TILE_SIZE * playerScale
             );
-             // Player HP is shown in the main UI panel, but maybe draw name?
+             // Player HP is shown in the main UI panel, but maybe draw name? - Relative to base position
              ctx.fillStyle = 'white';
              ctx.textAlign = 'center';
-             ctx.fillText("Nazuna", playerX, playerY + (TILE_SIZE * playerScale / 2) + 15);
+             ctx.fillText("Nazuna", playerBaseX, playerBaseY + (TILE_SIZE * playerScale / 2) + 15);
         }
 
         // --- Draw Combat Menu (Improved Layout) ---
@@ -713,9 +750,9 @@ function drawCombatScreen() {
         const menuSpacing = 25;
         ctx.textAlign = 'center';
         ctx.fillText(`ACTIONS`, menuX, menuY - menuSpacing);
-        ctx.fillText(`(A)ttack`, menuX, menuY);
-        ctx.fillText(`(I)tem`, menuX, menuY + menuSpacing);
-        ctx.fillText(`(F)lee`, menuX, menuY + menuSpacing * 2);
+        ctx.fillText(`(1) Attack`, menuX, menuY); // Updated key display
+        ctx.fillText(`(2) Item`, menuX, menuY + menuSpacing); // Updated key display
+        ctx.fillText(`(3) Flee`, menuX, menuY + menuSpacing * 2); // Updated key display
 
         // --- Draw Combat Log (Top Area) ---
         const logMessages = getCombatLog();

@@ -241,6 +241,8 @@ function findTileCoords(mapData, tileType, searchFromBottom = false) {
     return null; // Not found
 }
 
+// Export the world map data directly for use in game.js transition logic
+export { largeWorldMap };
 
 // Function to change the current map data and ID
 export function changeMap(mapId) {

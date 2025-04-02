@@ -30,7 +30,7 @@ function showAuthForms() {
     const gameContainer = document.querySelector('.game-container');
     const authForms = document.getElementById('authForms');
     if (gameContainer) gameContainer.style.display = 'none';
-    if (authForms) authForms.style.display = 'block';
+    if (authForms) authForms.style.display = 'flex'; // Use flex to enable centering via CSS
     showLoginForm(); // Default to showing login form when auth is needed
 }
 

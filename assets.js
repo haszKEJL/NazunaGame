@@ -108,6 +108,25 @@ npcSprites.villager.src = 'nazuna_front.png'; // Placeholder
 npcSprites.villager.onload = () => npcSpriteLoaded('villager (nazuna_front.png)');
 npcSprites.villager.onerror = () => npcSpriteError('villager (nazuna_front.png)');
 
+// --- Combat Background ---
+export const combatBackground = new Image();
+let combatBackgroundLoaded = false;
+
+function combatBackgroundAssetLoaded(assetName) {
+    console.log(`Combat background loaded: ${assetName}`);
+    combatBackgroundLoaded = true;
+    checkAllAssetsLoaded();
+}
+function combatBackgroundAssetError(assetName) {
+    console.error(`Failed to load combat background: ${assetName}`);
+    combatBackgroundLoaded = true; // Mark as loaded anyway
+    checkAllAssetsLoaded();
+}
+
+combatBackground.src = 'combat_background.png'; // Placeholder filename
+combatBackground.onload = () => combatBackgroundAssetLoaded('combat_background.png');
+combatBackground.onerror = () => combatBackgroundAssetError('combat_background.png');
+
 
 // --- Asset Loading Check ---
 let allAssetsLoaded = false;
@@ -118,7 +137,7 @@ function checkAllAssetsLoaded() {
     const allEnemySpritesLoaded = enemySpritesLoadedCount === totalEnemySprites;
     const allNpcSpritesLoaded = npcSpritesLoadedCount === totalNpcSprites; // Added NPC check
 
-    if (allPlayerSpritesLoaded && tilesetLoaded && allEnemySpritesLoaded && allNpcSpritesLoaded && !allAssetsLoaded) { // Added NPC check
+    if (allPlayerSpritesLoaded && tilesetLoaded && allEnemySpritesLoaded && allNpcSpritesLoaded && combatBackgroundLoaded && !allAssetsLoaded) { // Added combat background check
         allAssetsLoaded = true;
         console.log("All assets loaded.");
         if (onAllAssetsLoadedCallback) {
@@ -126,7 +145,7 @@ function checkAllAssetsLoaded() {
         }
     } else {
          // Optional: More detailed logging during development
-         // console.log(`Asset loading status: Player ${playerSpritesLoadedCount}/${totalPlayerSprites}, Tileset ${tilesetLoaded}, Enemies ${enemySpritesLoadedCount}/${totalEnemySprites}, NPCs ${npcSpritesLoadedCount}/${totalNpcSprites}`);
+         // console.log(`Asset loading status: Player ${playerSpritesLoadedCount}/${totalPlayerSprites}, Tileset ${tilesetLoaded}, Enemies ${enemySpritesLoadedCount}/${totalEnemySprites}, NPCs ${npcSpritesLoadedCount}/${totalNpcSprites}, CombatBG ${combatBackgroundLoaded}`);
     }
 }
 

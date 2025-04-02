@@ -482,23 +482,25 @@ function setupListeners() {
          // Upgrade button listener
          upgradeItemBtn.addEventListener('click', () => {
              if (selectedInventoryIndex !== null && !upgradeItemBtn.disabled) {
-                 console.log(`UI: Attempting to upgrade item at index: ${selectedInventoryIndex}`);
-                 const success = upgradeInventoryItem(selectedInventoryIndex);
+                 const itemIndexToUpdate = selectedInventoryIndex; // Store index before potential changes
+                 console.log(`UI: Attempting to upgrade item at index: ${itemIndexToUpdate}`);
+                 const success = upgradeInventoryItem(itemIndexToUpdate); // Use stored index
+
                  if (success) {
                      addLogMessage("Item upgraded!");
-                     updateInventoryUI(); // Refresh grid
+                     updateInventoryUI(); // Refresh grid (this clears current selection state in UI)
                      updateUI(); // Update gold in main panel
-                     // Re-select the item to show updated details (index might be invalid if item removed)
-                     // Need to find the item again if list order changes, for now just update details
-                     if (player.inventory[selectedInventoryIndex]) { // Check if item still exists at index
-                        updateSelectedItemDetails(selectedInventoryIndex);
+                     // Explicitly re-select the item using the stored index AFTER UI refresh
+                     if (player.inventory[itemIndexToUpdate]) { // Check if item still exists at the original index
+                        updateSelectedItemDetails(itemIndexToUpdate); // Re-display details for the item at the original index
                      } else {
-                        updateSelectedItemDetails(null); // Clear details if item gone
+                        // Item might have been consumed or moved, clear details
+                        updateSelectedItemDetails(null);
                      }
                  } else {
                      addLogMessage("Upgrade failed."); // Add feedback
-                     // Update details to show current gold/cost
-                     updateSelectedItemDetails(selectedInventoryIndex);
+                     // Update details to show potentially changed gold/cost, keep selection
+                     updateSelectedItemDetails(itemIndexToUpdate); // Re-display details for the item at the original index
                  }
              }
          });

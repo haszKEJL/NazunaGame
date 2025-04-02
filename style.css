@@ -328,24 +328,41 @@ a:hover {
         "neck armor talisman" /* Swapped neck/talisman */
         "weapon armor shield" /* Weapon/Shield beside Armor */
         "ring1 boots ring2"; /* Rings beside Boots */
-    gap: 10px;
+    gap: 15px; /* Increased gap slightly */
     justify-items: center; /* Center items horizontally in their grid cell */
     align-items: center; /* Center items vertically */
-    max-width: 250px; /* Constrain width */
-    margin: 0 auto; /* Center the grid container */
+    max-width: 280px; /* Slightly wider to accommodate gaps */
+    margin: 10px auto; /* Center the grid container and add vertical margin */
 }
 
 
 .inventory-grid {
-    grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); /* Responsive grid */
-    min-height: 200px; /* Ensure inventory has some height */
+    grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); /* Smaller items */
+    min-height: 180px; /* Adjust min-height if needed */
+    gap: 8px; /* Slightly smaller gap for smaller items */
 }
 
-.equip-grid-slot, .inventory-item {
+.equip-grid-slot { /* Specific styling for equipment slots */
     background-color: #2a2a3a;
     border: 1px solid #5a5a6a;
     border-radius: 4px;
-    min-height: 60px;
+    width: 60px; /* Fixed width */
+    height: 60px; /* Fixed height */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Center content vertically */
+    padding: 5px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.inventory-item { /* Styling for general inventory items */
+    background-color: #2a2a3a;
+    border: 1px solid #5a5a6a;
+    border-radius: 4px;
+    min-height: 50px; /* Smaller height */
     display: flex;
     flex-direction: column;
     align-items: center;
