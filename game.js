@@ -861,15 +861,7 @@ function drawOtherPlayers(ctx) {
 }
 
 // --- Start Game Logic ---
-function attemptGameInitialization() {
-    console.log(`[DEBUG] attemptGameInitialization called. assetsAreLoaded=${assetsAreLoaded}, playerDataInitialized=${playerDataInitialized}`); // ADDED LOG
-    if (assetsAreLoaded && playerDataInitialized) {
-        console.log("Assets loaded and player data initialized. Starting game.");
-        initializeGame(); // Initialize game only after both are ready
-    } else {
-        console.log(`Waiting: Assets Loaded=${assetsAreLoaded}, Player Data Initialized=${playerDataInitialized}`);
-    }
-}
+// Original definition removed, the modified one below handles initialization.
 
 // Listen for asset loading completion
 console.log("Waiting for assets...");

@@ -84,13 +84,7 @@ async function loginUser(username, password) {
             console.log("Login successful. Token:", data.token);
             console.log("Received user data:", data.user);
 
-            // Initialize player state using the received data
-            if (window.initializePlayerFromData) {
-                window.initializePlayerFromData(data.user);
-                // TODO: Trigger UI update if needed immediately after init
-            } else {
-                console.error("initializePlayerFromData function not found on window object! Game should handle initialization.");
-            }
+            // Store data and dispatch event. game.js will handle initialization.
             localStorage.setItem('initialPlayerData', JSON.stringify(data.user)); // Store data
             showGameUI(); // Show the game interface directly
             document.dispatchEvent(new CustomEvent('playerDataReady')); // Dispatch event
@@ -118,13 +112,7 @@ async function fetchAndInitializePlayerData(token) {
             console.log("Successfully fetched user data:", userData);
             localStorage.setItem('username', userData.username); // Update username
 
-            // Initialize player state
-            if (window.initializePlayerFromData) {
-                window.initializePlayerFromData(userData);
-                // TODO: Trigger UI update if needed immediately
-            } else {
-                console.error("initializePlayerFromData function not found! Game should handle initialization.");
-            }
+            // Store data and dispatch event. game.js will handle initialization.
             localStorage.setItem('initialPlayerData', JSON.stringify(userData)); // Store data
             showGameUI(); // Show game now that data is loaded
             console.log(`Welcome back, ${userData.username}!`);
