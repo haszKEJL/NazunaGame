@@ -13,8 +13,8 @@ import {
 } from './map.js';
 // Import savePlayerData from player.js
 import { player, drawPlayer, useItem, equipFirstAvailableItem, initializePlayerStats, savePlayerData, initializePlayerFromData } from './player.js';
-// Import updateEnemiesFromServer and removeEnemy
-import { enemies, drawEnemies, clearEnemies, updateEnemiesFromServer, removeEnemy } from './enemy.js';
+// Import enemy functions including the new addEnemy
+import { enemies, drawEnemies, clearEnemies, updateEnemiesFromServer, removeEnemy, addEnemy } from './enemy.js';
 import { npcs, drawNpcs, clearNpcs, spawnNpcsForMap, getNpcAt } from './npc.js'; // Import NPC functions
 import {
     startCombat,
@@ -986,6 +986,13 @@ function initializeSocketConnection() {
         console.log('Received current enemies:', serverEnemies);
         // Call the function in enemy.js to update the local list
         updateEnemiesFromServer(serverEnemies || {}); // Pass empty object if null/undefined
+    });
+
+    // Listen for a single enemy spawning
+    socket.on('enemySpawned', (enemyData) => {
+        console.log('Received enemySpawned:', enemyData);
+        // Call a new function in enemy.js to add this single enemy
+        addEnemy(enemyData); // We will create this function in enemy.js
     });
 
     // Listen for enemy removal broadcast by the server

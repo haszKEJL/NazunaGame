@@ -143,6 +143,35 @@ export function updateEnemiesFromServer(serverEnemies) {
     console.log(`Client: Updated enemies from server. Count: ${enemies.length}`);
 }
 
+/**
+ * Adds a single enemy received from the server to the client's list.
+ * @param {object} enemyData - The data for the single enemy from the server.
+ *                             Example: { id: 'enemy-123', type: 'skeleton', x: 15, y: 20, level: 3, hp: 30, maxHp: 30 }
+ */
+export function addEnemy(enemyData) {
+    // Check if enemy with this ID already exists (e.g., due to race condition or duplicate message)
+    if (enemies.some(e => e.id === enemyData.id)) {
+        console.warn(`Client: Received spawn event for existing enemy ID ${enemyData.id}. Ignoring.`);
+        return;
+    }
+
+    // Use createEnemy to build the full client-side object
+    const clientEnemy = createEnemy(enemyData.type, enemyData.x, enemyData.y, enemyData.level);
+
+    if (clientEnemy) {
+        // Overwrite client-generated ID/HP with server-provided data
+        clientEnemy.id = enemyData.id;
+        clientEnemy.hp = enemyData.hp;
+        clientEnemy.maxHp = enemyData.maxHp;
+        // Add any other server-authoritative fields here if needed
+
+        enemies.push(clientEnemy); // Add the new enemy to the array
+        console.log(`Client: Added spawned enemy ${clientEnemy.id} (${clientEnemy.type})`);
+    } else {
+        console.warn(`Failed to create client enemy object for spawned server data:`, enemyData);
+    }
+}
+
 
 // Draw enemies
 /**
