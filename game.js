@@ -811,7 +811,7 @@ function drawCombatScreen() {
         });
 
 
-    } else if (isCombatEnded()) {
+    } else if (getCombatResult().ended) { // Use getCombatResult().ended here
          // Handle display after combat ends but before returning to overworld if needed
          ctx.font = '16px "Press Start 2P"';
          ctx.fillText(`Combat Over!`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);

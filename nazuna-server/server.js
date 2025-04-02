@@ -70,6 +70,22 @@ app.get('*', (req, res) => {
 // --- Game State (Server-Side) ---
 const players = {}; // Store connected players: { socket.id: { id, name, x, y, sprite, mapId, ... } }
 const enemiesByMap = {}; // Store enemies per map: { mapId: { enemyId: { id, type, x, y, hp, ... } } }
+let activeMaps = new Set(); // Keep track of maps with players
+
+// --- Game Constants ---
+const RESPAWN_INTERVAL = 60000; // Check respawn every 60 seconds (1 minute)
+const TARGET_ENEMY_COUNT = { // Target number of enemies per map
+    world: 20,
+    dungeon: 15,
+    city: 0, // No enemies in city
+    // Add other maps here if needed
+};
+const MAP_DIMENSIONS = { // Approx dimensions for random spawning (replace with real map data later)
+    world: { cols: 50, rows: 50 },
+    dungeon: { cols: 30, rows: 30 },
+    city: { cols: 40, rows: 40 },
+};
+
 
 // --- Enemy Definitions (Copied from client/enemy.js for now) ---
 // TODO: Move this to a shared config file or database later
@@ -116,16 +132,135 @@ function createServerEnemy(type, x, y, level) {
     };
 }
 
-// Basic server-side spawner (less complex than client's biome logic for now)
-function spawnEnemiesForMap(mapId) {
-    if (enemiesByMap[mapId] && Object.keys(enemiesByMap[mapId]).length > 0) {
-        console.log(`Enemies already exist for map ${mapId}. Skipping spawn.`);
-        return; // Don't respawn if enemies already exist
+
+// Spawns a specific *number* of new enemies for a map and returns them.
+// Does NOT clear existing enemies. Adds to the existing map object.
+function spawnNewEnemies(mapId, countToSpawn) {
+    if (!enemiesByMap[mapId]) {
+        enemiesByMap[mapId] = {}; // Ensure map exists in state
+    }
+    if (countToSpawn <= 0) return []; // Nothing to spawn
+
+    console.log(`Attempting to spawn ${countToSpawn} new enemies for map ${mapId}...`);
+
+    let enemyConfig = [];
+    let levelRange = { min: 1, max: 3 };
+    const mapDims = MAP_DIMENSIONS[mapId] || { cols: 30, rows: 30 }; // Default dimensions if not specified
+    const mapCols = mapDims.cols;
+    const mapRows = mapDims.rows;
+
+    // Define enemy types and levels based on mapId
+    switch (mapId) {
+        case 'world':
+            levelRange = { min: 1, max: 5 };
+            enemyConfig = [
+                { type: 'slime', weight: 6 },
+                { type: 'skeleton', weight: 3 },
+                { type: 'cultist', weight: 2 },
+            ];
+            break;
+        case 'city':
+             return []; // No enemies in city
+        case 'dungeon':
+            levelRange = { min: 3, max: 7 };
+            enemyConfig = [
+                { type: 'slime', weight: 2 },
+                { type: 'skeleton', weight: 4 },
+                { type: 'cultist', weight: 3 },
+                { type: 'demon', weight: 1 },
+            ];
+            break;
+        default:
+            console.warn(`No enemy spawn configuration for map ID: ${mapId}`);
+            return []; // Return empty if no config
     }
 
-    console.log(`Spawning enemies for map ${mapId}...`);
-    enemiesByMap[mapId] = {}; // Initialize/clear map enemies
-    let spawnCount = 0;
+    if (enemyConfig.length === 0) {
+        console.log(`No enemy types configured for map '${mapId}'.`);
+        return [];
+    }
+
+    const totalWeight = enemyConfig.reduce((sum, config) => sum + config.weight, 0);
+    let attempts = 0;
+    const maxAttemptsPerEnemy = 20; // Max attempts to find a spot for *each* enemy
+    const newlySpawnedEnemies = [];
+
+    for (let i = 0; i < countToSpawn; i++) {
+        attempts = 0; // Reset attempts for each enemy
+        let spawned = false;
+        while (!spawned && attempts < maxAttemptsPerEnemy) {
+            attempts++;
+            let randomWeight = Math.random() * totalWeight;
+            let chosenType = null;
+            for (const config of enemyConfig) {
+                randomWeight -= config.weight;
+                if (randomWeight <= 0) {
+                    chosenType = config.type;
+                    break;
+                }
+            }
+            if (!chosenType) continue; // Should not happen if totalWeight > 0
+
+            // Choose random position
+            // TODO: Use actual map data for walkable checks later
+            const x = Math.floor(Math.random() * mapCols);
+            const y = Math.floor(Math.random() * mapRows);
+
+            // Basic check: ensure not spawning on the exact same tile as existing enemies or players
+            const enemyOccupied = Object.values(enemiesByMap[mapId]).some(e => e.x === x && e.y === y);
+            const playerOccupied = Object.values(players).some(p => p.mapId === mapId && Math.floor(p.x / 32) === x && Math.floor(p.y / 32) === y); // Assuming TILE_SIZE is 32
+
+            if (!enemyOccupied && !playerOccupied) { // Add isWalkable check later
+                const level = Math.floor(Math.random() * (levelRange.max - levelRange.min + 1)) + levelRange.min;
+                const enemy = createServerEnemy(chosenType, x, y, level);
+                if (enemy) {
+                    enemiesByMap[mapId][enemy.id] = enemy; // Add to state
+                    newlySpawnedEnemies.push(enemy); // Add to list to be returned/broadcasted
+                    spawned = true;
+                }
+            }
+        } // End while trying to spawn one enemy
+        if (!spawned) {
+            console.warn(`Could not find suitable spot for new enemy on map ${mapId} after ${maxAttemptsPerEnemy} attempts.`);
+        }
+    } // End for loop for countToSpawn
+
+    console.log(`Successfully spawned ${newlySpawnedEnemies.length} new enemies for map ${mapId}.`);
+    return newlySpawnedEnemies;
+}
+
+
+// Function to check and respawn enemies for a specific map if needed
+function respawnEnemiesIfNeeded(mapId) {
+    const targetCount = TARGET_ENEMY_COUNT[mapId];
+    if (targetCount === undefined || targetCount <= 0) {
+        // console.log(`Respawn check: Map ${mapId} has no target enemy count or target is 0.`);
+        return; // No respawning needed for this map
+    }
+
+    if (!enemiesByMap[mapId]) {
+        enemiesByMap[mapId] = {}; // Initialize if map doesn't exist in state yet
+    }
+
+    const currentCount = Object.keys(enemiesByMap[mapId]).length;
+    const needed = targetCount - currentCount;
+
+    if (needed > 0) {
+        console.log(`Respawn check: Map ${mapId} needs ${needed} enemies (Target: ${targetCount}, Current: ${currentCount}). Spawning...`);
+        const newlySpawned = spawnNewEnemies(mapId, needed);
+
+        // Broadcast each newly spawned enemy
+        newlySpawned.forEach(enemy => {
+            io.to(mapId).emit('enemySpawned', enemy); // Send full enemy data
+             console.log(`Broadcasted enemySpawned event for ${enemy.id} (${enemy.type}) to map room ${mapId}.`);
+        });
+    } else {
+        // console.log(`Respawn check: Map ${mapId} is full (Target: ${targetCount}, Current: ${currentCount}).`);
+    }
+}
+
+
+// Function to get players on a specific map
     let enemyConfig = [];
     let levelRange = { min: 1, max: 3 };
     // Simplified map dimensions (replace with actual map data later if needed)
