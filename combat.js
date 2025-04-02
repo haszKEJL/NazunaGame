@@ -1,5 +1,5 @@
 import { BASE_HIT_CHANCE, DEXTERITY_HIT_MODIFIER } from './config.js';
-import { player, gainXP, getStatBonus, addItemToInventory, useItem } from './player.js'; // Added useItem import
+import { player, gainXP, getStatBonus, addItemToInventory, useItem, savePlayerData } from './player.js'; // Added useItem and savePlayerData import
 import { removeEnemy } from './enemy.js'; // Keep for removing enemy on victory
 import { items, generateInitialSubstats } from './items.js'; // Added generateInitialSubstats import
 
