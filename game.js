@@ -1,4 +1,4 @@
-import { TILE_SIZE, TILE_FLOOR, TILE_CITY_ENTRANCE, TILE_DOOR, TILE_DUNGEON_ENTRANCE } from './config.js'; // Added TILE_DUNGEON_ENTRANCE
+import { TILE_SIZE, TILE_FLOOR, TILE_CITY_ENTRANCE, TILE_DOOR, TILE_DUNGEON_ENTRANCE, TILE_DUNGEON_EXIT } from './config.js'; // Added TILE_DUNGEON_ENTRANCE and TILE_DUNGEON_EXIT
 import { onAssetsLoaded, areAssetsLoaded, playerSprites, combatBackground } from './assets.js'; // Added combatBackground import
 import { isWalkable, getTileAt, findNearestWalkableTile } from './utils.js'; // Added findNearestWalkableTile
 import {
@@ -23,8 +23,8 @@ import {
     // Import animation state from combat.js
     isAnimating,
     animatingCharacter,
-    animationProgress,
-    ANIMATION_SPEED,
+    animationProgress, // Keep for drawing, but don't modify directly
+    updateAnimationProgress, // Import the new function
     nextTurn // Import nextTurn to call it after animation
 } from './combat.js';
 // Import dialogue and inventory functions from ui.js
@@ -416,11 +416,9 @@ function update() {
                 // For now, use default world start.
                 newPlayerCoords = getDefaultStartCoords(newMapId);
             } else if (currentMapId === 'dungeon') {
-                // TODO: Add logic to exit dungeon later, potentially finding the entrance tile
-                // if (targetTileType === TILE_FLOOR && targetTileX === 1 && targetTileY === 0) { // Example exit condition
-                // Check for dungeon exit at specific coordinates (12, 1)
-                if (targetTileX === 12 && targetTileY === 1) {
-                    console.log("Player reached dungeon exit tile (12, 1).");
+                // Check for dungeon exit using the defined tile type
+                if (targetTileType === TILE_DUNGEON_EXIT) {
+                    console.log("Player reached dungeon exit tile (TILE_DUNGEON_EXIT).");
                     newMapId = 'world';
                     // Find dungeon entrance on world map to place player nearby
                     const worldMapData = largeWorldMap; // Need access to the world map definition
@@ -558,15 +556,12 @@ function updateCombat() {
 
     // Handle Animation Progression
     if (isAnimating) {
-        animationProgress += ANIMATION_SPEED;
-        if (animationProgress >= 1) {
-            isAnimating = false;
-            animationProgress = 0;
-            animatingCharacter = null;
+        const animationFinished = updateAnimationProgress(); // Call the function from combat.js
+        if (animationFinished) {
             // Animation finished, now proceed with the next turn
             nextTurn(); // Call nextTurn from combat.js
         }
-        return; // Don't process input while animating
+        return; // Don't process input while animating (whether finished this frame or not)
     }
 
     // Handle Player Input for Combat Actions (Check 1, 2, 3 keys) - Only if not animating

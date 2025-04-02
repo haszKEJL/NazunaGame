@@ -4,7 +4,7 @@ import {
     TILE_SIZE, TILE_FLOOR, TILE_WALL, TILE_GRASS, TILE_WATER,
     TILE_CITY_ENTRANCE, TILE_ROAD, TILE_BUILDING, TILE_DOOR, TILE_DUNGEON_ENTRANCE,
     TILE_FOREST, TILE_MOUNTAIN, TILE_DESERT, TILE_SWAMP,
-    TILE_TREE, TILE_STONE // Added obstacles
+    TILE_TREE, TILE_STONE, TILE_DUNGEON_EXIT // Added obstacles and dungeon exit
 } from './config.js';
 // import { tileset, areAssetsLoaded } from './assets.js'; // No longer needed for drawing map
 
@@ -24,8 +24,8 @@ const DS = TILE_DESERT;
 const SW = TILE_SWAMP;
 const TR = TILE_TREE; // Alias for Tree
 const ST = TILE_STONE; // Alias for Stone
+const DX = TILE_DUNGEON_EXIT; // Alias for Dungeon Exit
 
-// --- Map Definitions ---
 
 // Function to generate a simple dungeon map with border walls
 function generateDungeonMap(width, height) {
@@ -40,11 +40,10 @@ function generateDungeonMap(width, height) {
             }
         }
     }
-    // Place exit explicitly (e.g., near top center)
+    // Place exit explicitly (e.g., near top center) using the new tile type
     const exitX = Math.floor(width / 2);
-    map[1][exitX] = FL; // Ensure exit tile is floor
-    // You might want a specific marker tile later, but floor works for now
-    console.log(`Generated dungeon map ${width}x${height}. Exit at (${exitX}, 1)`);
+    map[1][exitX] = DX; // Use TILE_DUNGEON_EXIT alias
+    console.log(`Generated dungeon map ${width}x${height}. Exit tile (DX) placed at (${exitX}, 1)`);
     return map;
 }
 
@@ -346,6 +345,9 @@ export function drawMap(ctx) {
                         break;
                     case TILE_STONE:
                         tileColor = '#708090'; // SlateGray for stones
+                        break;
+                    case TILE_DUNGEON_EXIT: // Use the actual constant name here
+                        tileColor = '#A0522D'; // Sienna (brown) for dungeon exit
                         break;
                     default:
                         tileColor = '#FF00FF'; // Magenta for unknown/error

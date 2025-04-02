@@ -16,6 +16,20 @@ export let animatingCharacter = null; // 'player' or 'enemy'
 export let animationProgress = 0; // 0 to 1
 export const ANIMATION_SPEED = 0.05; // Controls how fast animation progresses per frame
 
+// Function to update animation progress internally
+export function updateAnimationProgress() {
+    if (isAnimating) {
+        animationProgress += ANIMATION_SPEED;
+        if (animationProgress >= 1) {
+            isAnimating = false;
+            animationProgress = 0;
+            animatingCharacter = null;
+            return true; // Indicate animation finished
+        }
+    }
+    return false; // Indicate animation ongoing or not active
+}
+
 // --- Combat Calculation --- (Keep calculateHitChance)
 function calculateHitChance(attackerDex, defenderDex) {
     const dexDifference = attackerDex - defenderDex;
