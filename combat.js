@@ -14,7 +14,7 @@ let playerActionSelected = false; // Flag to prevent multiple actions per turn
 export let isAnimating = false;
 export let animatingCharacter = null; // 'player' or 'enemy'
 export let animationProgress = 0; // 0 to 1
-const ANIMATION_SPEED = 0.05; // Controls how fast animation progresses per frame
+export const ANIMATION_SPEED = 0.05; // Controls how fast animation progresses per frame
 
 // --- Combat Calculation --- (Keep calculateHitChance)
 function calculateHitChance(attackerDex, defenderDex) {
