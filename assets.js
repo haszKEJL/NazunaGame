@@ -8,8 +8,9 @@ tileset.onload = () => {
     checkAllAssetsLoaded();
 };
 tileset.onerror = () => {
-    console.error("Failed to load tileset: simple_tiles.png");
-    tilesetLoaded = true; // Mark as loaded anyway to prevent blocking, but log error
+    console.error("CRITICAL: Failed to load tileset: simple_tiles.png");
+    criticalAssetErrorOccurred = true; // Set critical error flag
+    tilesetLoaded = true; // Mark as loaded anyway to ensure check runs
     checkAllAssetsLoaded();
 };
 
@@ -63,8 +64,9 @@ function playerSpriteLoaded(spriteName) {
     checkAllAssetsLoaded();
 }
 function playerSpriteError(spriteName) {
-    console.error(`Failed to load player sprite: ${spriteName}`);
-    playerSpritesLoadedCount++; // Increment even on error
+    console.error(`CRITICAL: Failed to load player sprite: ${spriteName}`);
+    criticalAssetErrorOccurred = true; // Set critical error flag
+    playerSpritesLoadedCount++; // Increment count anyway to ensure check runs
     checkAllAssetsLoaded();
 }
 
@@ -129,23 +131,34 @@ combatBackground.onerror = () => combatBackgroundAssetError('combat_background.p
 
 
 // --- Asset Loading Check ---
+let criticalAssetErrorOccurred = false; // Flag to track critical errors
 let allAssetsLoaded = false;
 let onAllAssetsLoadedCallback = null;
 
 function checkAllAssetsLoaded() {
     const allPlayerSpritesLoaded = playerSpritesLoadedCount === totalPlayerSprites;
     const allEnemySpritesLoaded = enemySpritesLoadedCount === totalEnemySprites;
-    const allNpcSpritesLoaded = npcSpritesLoadedCount === totalNpcSprites; // Added NPC check
+    const allNpcSpritesLoaded = npcSpritesLoadedCount === totalNpcSprites;
+    const allCombatBackgroundLoaded = combatBackgroundLoaded; // Use the flag directly
 
-    if (allPlayerSpritesLoaded && tilesetLoaded && allEnemySpritesLoaded && allNpcSpritesLoaded && combatBackgroundLoaded && !allAssetsLoaded) { // Added combat background check
+    const allCountersMet = allPlayerSpritesLoaded && tilesetLoaded && allEnemySpritesLoaded && allNpcSpritesLoaded && allCombatBackgroundLoaded;
+
+    if (allCountersMet && !criticalAssetErrorOccurred && !allAssetsLoaded) {
+        // Only set allAssetsLoaded to true if all counters are met AND no critical error occurred
         allAssetsLoaded = true;
-        console.log("All assets loaded.");
+        console.log("All assets loaded successfully.");
         if (onAllAssetsLoadedCallback) {
             onAllAssetsLoadedCallback();
         }
-    } else {
+    } else if (allCountersMet && criticalAssetErrorOccurred && !allAssetsLoaded) {
+        // If all counters met but a critical error occurred, log it and don't proceed
+        console.error("Asset loading complete, but critical assets failed to load. Game cannot start.");
+        // Optionally, display an error message to the user via the UI here
+        // e.g., document.getElementById('loadingError').textContent = 'Failed to load critical game assets. Please check file paths and reload.';
+    } else if (!allAssetsLoaded) {
+         // Still loading or non-critical error occurred
          // Optional: More detailed logging during development
-         // console.log(`Asset loading status: Player ${playerSpritesLoadedCount}/${totalPlayerSprites}, Tileset ${tilesetLoaded}, Enemies ${enemySpritesLoadedCount}/${totalEnemySprites}, NPCs ${npcSpritesLoadedCount}/${totalNpcSprites}, CombatBG ${combatBackgroundLoaded}`);
+         // console.log(`Asset loading status: Player ${playerSpritesLoadedCount}/${totalPlayerSprites}, Tileset ${tilesetLoaded}, Enemies ${enemySpritesLoadedCount}/${totalEnemySprites}, NPCs ${npcSpritesLoadedCount}/${totalNpcSprites}, CombatBG ${combatBackgroundLoaded}, CriticalError: ${criticalAssetErrorOccurred}`);
     }
 }
 
