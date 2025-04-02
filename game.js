@@ -906,11 +906,11 @@ document.addEventListener('playerDataReady', () => {
 
 // --- Socket.IO Client Setup ---
 function initializeSocketConnection() {
-    // Connect to the server (adjust URL if needed, maybe use config.js later)
-    // Ensure this runs *after* player is authenticated and has basic data
-    const serverUrl = `http://${window.location.hostname}:5001`; // Dynamically use hostname
-    console.log(`Attempting to connect to Socket.IO server at ${serverUrl}`);
-    socket = io(serverUrl); // io() is now globally available from the script loaded in index.html
+    // Connect to the server using the same origin as the page.
+    // OnRender handles HTTPS termination and routing to the correct port.
+    // io() without arguments defaults to the current origin.
+    console.log(`Attempting to connect to Socket.IO server at origin: ${window.location.origin}`);
+    socket = io(); // Connect to the origin the page was served from (handles HTTPS correctly on OnRender)
 
     socket.on('connect', () => {
         console.log('Connected to game server with ID:', socket.id);
