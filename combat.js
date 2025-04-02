@@ -1,7 +1,7 @@
 import { BASE_HIT_CHANCE, DEXTERITY_HIT_MODIFIER } from './config.js';
-import { player, gainXP, getStatBonus, addItemToInventory } from './player.js';
+import { player, gainXP, getStatBonus, addItemToInventory, useItem } from './player.js'; // Added useItem import
 import { removeEnemy } from './enemy.js'; // Keep for removing enemy on victory
-import { items } from './items.js';
+import { items, generateInitialSubstats } from './items.js'; // Added generateInitialSubstats import
 
 // --- Combat State ---
 let currentEnemy = null;
@@ -37,6 +37,27 @@ function calculateHitChance(attackerDex, defenderDex) {
     hitChance = Math.max(0.05, Math.min(0.95, hitChance)); // Clamp 5%-95%
     return hitChance;
 }
+
+// Calculate Flee Chance
+function calculateFleeChance() {
+    if (!currentEnemy) return 0; // Cannot flee if no enemy
+
+    const BASE_FLEE_CHANCE = 0.50; // 50% base chance
+    const LEVEL_DIFF_MODIFIER = 0.05; // 5% change per level difference
+    const SPEED_MODIFIER = 0.01; // 1% change per point of speed
+
+    const levelDifference = player.level - currentEnemy.level;
+    // Player speed is calculated in player.js (includes item bonuses)
+    const speedDifference = player.speed; // Enemies don't have speed yet
+
+    let fleeChance = BASE_FLEE_CHANCE + (levelDifference * LEVEL_DIFF_MODIFIER) + (speedDifference * SPEED_MODIFIER);
+
+    // Clamp flee chance between 5% and 95%
+    fleeChance = Math.max(0.05, Math.min(0.95, fleeChance));
+    console.log(`Calculated Flee Chance: ${fleeChance.toFixed(2)} (LvlDiff: ${levelDifference}, Speed: ${speedDifference})`);
+    return fleeChance;
+}
+
 
 // --- Combat Logging ---
 function addCombatLog(message) {
@@ -130,6 +151,7 @@ function checkCombatEnd() {
         if (currentEnemy.goldDrop > 0) {
             player.gold += currentEnemy.goldDrop;
             addCombatLog(`Player gained ${currentEnemy.goldDrop} gold.`);
+            savePlayerData(); // Save after gaining gold
         }
         // --- Item Drop Logic (Themed) ---
         if (currentEnemy.dropTable && currentEnemy.dropTable.length > 0) {
@@ -139,10 +161,21 @@ function checkCombatEnd() {
                 currentEnemy.dropTable.forEach(drop => {
                     const increasedChance = Math.min(1.0, drop.chance + 0.2); // Increase chance by 20%, max 100%
                     if (Math.random() < increasedChance) {
-                        const itemData = items[drop.itemKey];
-                        if (itemData) {
-                            addItemToInventory(itemData); // Use function from player.js
-                            addCombatLog(`Enemy dropped ${itemData.name}!`);
+                        const itemDefinition = items[drop.itemKey]; // Get the base definition
+                        if (itemDefinition) {
+                            // Create a unique instance of the item
+                            const newItemInstance = { ...itemDefinition };
+
+                            // If the item is equippable (has rarity), generate substats
+                            if (newItemInstance.rarity) {
+                                newItemInstance.substats = generateInitialSubstats(itemDefinition);
+                                // Ensure upgradeLevel is initialized if not present (though it should be)
+                                newItemInstance.upgradeLevel = newItemInstance.upgradeLevel || 0;
+                            }
+
+                            // Add the specific instance (with potential substats) to inventory
+                            addItemToInventory(newItemInstance);
+                            addCombatLog(`Enemy dropped ${newItemInstance.name}!`);
                         } else {
                             console.warn(`Item key '${drop.itemKey}' not found in items.js for drop table.`);
                         }
@@ -197,17 +230,37 @@ export function processPlayerAction(action) {
     switch (action.toLowerCase()) {
         case 'attack':
             playerAttack();
+            // Attack action sets animation, turn progresses after animation
             break;
         case 'item':
-            // TODO: Implement item usage in combat (needs UI selection)
-            addCombatLog("Using items not implemented yet.");
-            playerActionSelected = false; // Allow another action if item use fails/is cancelled
-            return combatEnded; // Don't advance turn yet
+            // Simple implementation: Use first Health Potion if available
+            // TODO: Add UI for item selection during combat
+            addCombatLog("Player attempts to use an item...");
+            const itemUsed = useItem('Health Potion'); // Assuming useItem returns true on success, false on fail/not found
+            if (itemUsed) {
+                addCombatLog("Used Health Potion.");
+                // Item use doesn't trigger animation for now, so we can potentially call nextTurn directly
+                // However, to keep flow consistent with attack, let's wait for game.js to call nextTurn after this frame
+            } else {
+                addCombatLog("Could not use Health Potion (None available or HP full).");
+                playerActionSelected = false; // Allow another action if item use fails
+                return combatEnded; // Don't advance turn
+            }
+            break; // Turn progresses after successful item use (handled by game.js)
         case 'flee':
-            // TODO: Implement flee chance
-            addCombatLog("Fleeing not implemented yet.");
-             playerActionSelected = false; // Allow another action if flee fails
-            return combatEnded; // Don't advance turn yet
+            addCombatLog("Player attempts to flee...");
+            const fleeChance = calculateFleeChance();
+            if (Math.random() <= fleeChance) {
+                addCombatLog("Successfully fled from combat!");
+                combatEnded = true; // Set flag to end combat
+                currentEnemy = null; // Clear enemy reference
+                // No animation for fleeing, combat ends immediately
+            } else {
+                addCombatLog("Failed to flee!");
+                // Flee failure uses the player's turn, enemy will attack next
+                // Turn progression happens after this action completes (handled by game.js)
+            }
+            break; // Turn progresses after flee attempt (handled by game.js)
         default:
             addCombatLog("Unknown action.");
             playerActionSelected = false; // Allow another action

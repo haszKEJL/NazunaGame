@@ -1,6 +1,8 @@
 import { TILE_SIZE } from './config.js';
 import { playerSprites } from './assets.js';
-import { items } from './items.js'; // Needed for equipItem logic potentially
+// Import items definition AND the substat pool/generation logic if needed
+// For now, let's assume we only need the substat pool definition for rolling upgrades
+import { items, possibleSubstats } from './items.js'; // Import possibleSubstats
 import { getCurrentMapId } from './map.js'; // Import function to get current map ID
 
 // Player state object
@@ -19,6 +21,7 @@ export let player = {
     maxHp: 0,        // Maximum HP (based on CON)
     attack: 0,       // Physical attack power (based on STR)
     defense: 0,      // Physical defense (based on CON/AGI?)
+    speed: 0,        // Derived from items, affects flee chance etc.
     // Leveling & Progression
     level: 1,
     xp: 0,
@@ -39,22 +42,56 @@ export let player = {
     gold: 50 // Starting gold
 };
 
-// --- Stat Calculation Functions ---
+// --- Updated Stat Calculation Functions (incorporating percentage bonuses) ---
 
-// Base HP calculation (e.g., 50 base + 10 per CON point)
+// Base HP calculation
 function calculateMaxHp() {
-    return 50 + (player.constitution * 10) + getStatBonus('maxHp');
+    // Base HP from constitution
+    const baseHpFromStats = 50 + (player.constitution * 10);
+    // Flat HP bonus from items (main stats + flat substats)
+    const flatHpBonus = getStatBonus('maxHp'); // getStatBonus now only returns flat bonuses
+    // Calculate HP before percentage modifiers
+    const hpBeforePercent = baseHpFromStats + flatHpBonus;
+    // Percentage HP bonus from items (substats)
+    const percentHpBonus = getPercentageStatBonus('hpPercent');
+    // Apply percentage bonus
+    const finalMaxHp = Math.floor(hpBeforePercent * (1 + percentHpBonus));
+    return finalMaxHp;
 }
 
-// Base Attack calculation (e.g., 5 base + 2 per STR point)
+// Base Attack calculation
 function calculateAttack() {
-    return 5 + (player.strength * 2) + getStatBonus('attack');
+    // Base Attack from strength
+    const baseAttackFromStats = 5 + (player.strength * 2);
+    // Flat Attack bonus from items
+    const flatAttackBonus = getStatBonus('attack');
+    // Calculate Attack before percentage modifiers
+    const attackBeforePercent = baseAttackFromStats + flatAttackBonus;
+    // Percentage Attack bonus from items
+    const percentAttackBonus = getPercentageStatBonus('attackPercent');
+    // Apply percentage bonus
+    const finalAttack = Math.floor(attackBeforePercent * (1 + percentAttackBonus));
+    return finalAttack;
 }
 
-// Base Defense calculation (e.g., 1 base + 1 per CON point + 0.5 per AGI point?)
+// Base Defense calculation
 function calculateDefense() {
-    // Example: Mix of CON and AGI for defense
-    return 1 + (player.constitution * 1) + Math.floor(player.agility * 0.5) + getStatBonus('defense');
+    // Base Defense from constitution/agility
+    const baseDefenseFromStats = 1 + (player.constitution * 1) + Math.floor(player.agility * 0.5);
+    // Flat Defense bonus from items
+    const flatDefenseBonus = getStatBonus('defense');
+    // Calculate Defense before percentage modifiers
+    const defenseBeforePercent = baseDefenseFromStats + flatDefenseBonus;
+    // Percentage Defense bonus from items
+    const percentDefenseBonus = getPercentageStatBonus('defensePercent');
+    // Apply percentage bonus
+    const finalDefense = Math.floor(defenseBeforePercent * (1 + percentDefenseBonus));
+    return finalDefense;
+}
+
+// Base Speed calculation (only flat bonuses currently)
+function calculateSpeed() {
+    return getStatBonus('speed');
 }
 
 // Function to recalculate all derived stats
@@ -62,9 +99,10 @@ export function recalculateStats() {
     player.maxHp = calculateMaxHp();
     player.attack = calculateAttack();
     player.defense = calculateDefense();
+    player.speed = calculateSpeed(); // Calculate speed
     // Ensure HP doesn't exceed new maxHp
     player.hp = Math.min(player.hp, player.maxHp);
-    console.log("Player stats recalculated:", { maxHp: player.maxHp, attack: player.attack, defense: player.defense });
+    console.log("Player stats recalculated:", { maxHp: player.maxHp, attack: player.attack, defense: player.defense, speed: player.speed });
 }
 
 // Function to initialize player state from server data
@@ -171,6 +209,10 @@ export function gainXP(amount) {
         // TODO: Add visual feedback for level up in ui.js (e.g., flash effect)
         // TODO: Notify player they have points to spend in ui.js
     }
+    // Save player data after XP gain, even if no level up occurred
+    if (amount > 0 && !leveledUp) { // Avoid double-saving if level up already triggered save
+        savePlayerData();
+    }
     return leveledUp; // Return true if a level up occurred
 }
 
@@ -200,17 +242,74 @@ export function spendStatPoint(statName) {
 
 
 // --- Equipment & Stat Calculation ---
-// Get total bonus for a specific stat from all equipped items
+
+/**
+ * Gets the total FLAT bonus for a specific stat from main stats and substats of all equipped items.
+ * NOTE: This function intentionally ignores percentage-based stats.
+ * Percentage stats are handled directly in the calculate functions (calculateMaxHp, etc.).
+ * @param {string} statName - The name of the stat to get the flat bonus for.
+ * @returns {number} The total flat bonus from equipped items.
+ */
 export function getStatBonus(statName) {
-    let bonus = 0;
+    let flatBonus = 0;
     for (const slot in player.equipment) {
         const item = player.equipment[slot];
-        // Check if the item exists and has a stats object with the specified stat
-        if (item && typeof item.stats === 'object' && item.stats !== null && typeof item.stats[statName] === 'number') {
-            bonus += item.stats[statName];
+        if (!item) continue; // Skip empty slots
+
+        // 1. Check main stats object (flat bonus)
+        // Ensure we don't accidentally add % stats here if they exist in main stats
+        // (e.g., critRate might be a main stat later)
+        if (item.stats && typeof item.stats[statName] === 'number') {
+             // Simple check: assume main stats are flat unless explicitly named like 'critRate' or 'critDamage'
+             // This might need refinement if main stats can be percentages.
+             if (statName !== 'critRate' && statName !== 'critDamage' && !statName.endsWith('Percent')) {
+                 flatBonus += item.stats[statName];
+             }
+        }
+
+        // 2. Check substats array (flat bonus)
+        if (Array.isArray(item.substats)) {
+            for (const substat of item.substats) {
+                // Add value only if the stat name matches AND it's not a percentage stat
+                if (substat.stat === statName && !substat.isPercent) {
+                    flatBonus += substat.value;
+                }
+            }
         }
     }
-    return bonus;
+    // console.log(`[DEBUG] Flat bonus for ${statName}: ${flatBonus}`); // Optional log
+    return flatBonus;
+}
+
+/**
+ * Gets the total PERCENTAGE bonus for a specific stat from substats of all equipped items.
+ * @param {string} statName - The name of the percentage stat (e.g., 'hpPercent', 'attackPercent').
+ * @returns {number} The total percentage bonus (e.g., 0.1 for 10%).
+ */
+function getPercentageStatBonus(statName) {
+    let percentBonus = 0;
+    for (const slot in player.equipment) {
+        const item = player.equipment[slot];
+        if (!item) continue;
+
+        // Check substats array for percentage bonus
+        if (Array.isArray(item.substats)) {
+            for (const substat of item.substats) {
+                if (substat.stat === statName && substat.isPercent) {
+                    percentBonus += substat.value; // Add the percentage value (e.g., 5 for 5%)
+                }
+            }
+        }
+         // Check main stats for percentage bonus (e.g., critRate, critDamage)
+         if (item.stats && typeof item.stats[statName] === 'number') {
+             // Add check here if main stats can be percentages (like critRate)
+             if (statName === 'critRate' || statName === 'critDamage' || statName.endsWith('Percent')) {
+                 percentBonus += item.stats[statName];
+             }
+         }
+    }
+    // console.log(`[DEBUG] Percent bonus for ${statName}: ${percentBonus}%`); // Optional log
+    return percentBonus / 100; // Convert to decimal (e.g., 10 -> 0.10)
 }
 
 // --- Inventory Management ---
@@ -231,6 +330,8 @@ export function addItemToInventory(itemData) {
         player.inventory.push(item);
         console.log(`Added ${item.name} to inventory.`);
     }
+    // Save after adding item
+    savePlayerData();
 }
 
 export function useItem(itemName) {
@@ -254,6 +355,7 @@ export function useItem(itemName) {
         if (item.quantity <= 0) {
             player.inventory.splice(itemIndex, 1);
         }
+        savePlayerData(); // Save after using item
         return true; // Indicate success
     } else {
         console.log(`Cannot use ${itemName} right now.`);
@@ -307,6 +409,7 @@ export function equipItem(itemIndex) {
     player.inventory.splice(itemIndex, 1); // Remove from inventory
     console.log(`Equipped ${itemToEquip.name} in ${slot} slot.`);
     recalculateStats(); // Recalculate stats after equipping/unequipping
+    savePlayerData(); // Save after equipping/unequipping
 }
 
 // Simple function to equip the first weapon/armor found
@@ -348,17 +451,13 @@ export function upgradeInventoryItem(itemIndex) {
 
     const item = player.inventory[itemIndex];
 
-    // Check if item is upgradable
-    if (typeof item.upgradeLevel === 'undefined' || typeof item.maxUpgradeLevel === 'undefined' || !item.baseValue) {
-        console.log(`Upgrade failed: ${item.name} is not upgradable.`);
+    // Check if item is upgradable (has upgradeLevel and substats array)
+    if (typeof item.upgradeLevel === 'undefined' || !Array.isArray(item.substats) || !item.baseValue) {
+        console.log(`Upgrade failed: ${item.name} is not upgradable or missing substats array.`);
         return false;
     }
 
-    // Check if max level reached - REMOVED FOR INFINITE UPGRADES
-    // if (item.upgradeLevel >= item.maxUpgradeLevel) {
-    //     console.log(`Upgrade failed: ${item.name} is already at max level (${item.maxUpgradeLevel}).`);
-    //     return false;
-    // }
+    // Max level check is removed as per Genshin style (level cap might be 20, but substat rolls happen at 4, 8, 12, 16, 20)
 
     // Check cost
     const cost = calculateUpgradeCost(item);
@@ -369,10 +468,74 @@ export function upgradeInventoryItem(itemIndex) {
 
     // --- Apply Upgrade ---
     player.gold -= cost;
+    const previousLevel = item.upgradeLevel; // Store previous level for substat check
     item.upgradeLevel++;
 
-    // Apply stat increases (example: +1 to primary stat, maybe + defense for armor)
-    // This modifies the item instance directly in the inventory.
+    // --- Apply Main Stat Increases (Example - Adjust as needed) ---
+    // This logic might need refinement based on how main stats should scale
+    if (item.stats) {
+        // Example: Increase main stat(s) slightly each level
+        if (item.stats.attack) item.stats.attack += Math.ceil(item.upgradeLevel / 5); // Increase attack every 5 levels
+        if (item.stats.defense) item.stats.defense += Math.ceil(item.upgradeLevel / 5); // Increase defense every 5 levels
+        // Add more scaling for other main stats if desired
+    }
+
+    // --- Apply Substat Enhancement every 4 levels ---
+    const MAX_SUBSTATS = 4;
+    if (item.upgradeLevel > 0 && item.upgradeLevel % 4 === 0) {
+        console.log(`--- Reached Level ${item.upgradeLevel}: Enhancing substats for ${item.name} ---`);
+
+        const mainStats = Object.keys(item.stats || {});
+        const existingSubstatNames = item.substats.map(sub => sub.stat);
+
+        if (item.substats.length < MAX_SUBSTATS) {
+            // --- Add a new substat ---
+            let availableSubstatsPool = possibleSubstats.filter(subDef =>
+                !mainStats.includes(subDef.stat) && !existingSubstatNames.includes(subDef.stat)
+            );
+
+            if (availableSubstatsPool.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableSubstatsPool.length);
+                const selectedSubstatDef = availableSubstatsPool[randomIndex];
+                const randomTierIndex = Math.floor(Math.random() * selectedSubstatDef.tiers.length);
+                const selectedValue = selectedSubstatDef.tiers[randomTierIndex];
+
+                const newSubstat = {
+                    stat: selectedSubstatDef.stat,
+                    value: selectedValue,
+                    isPercent: selectedSubstatDef.isPercent
+                };
+                item.substats.push(newSubstat);
+                console.log(`Added new substat: ${newSubstat.stat} +${newSubstat.value}${newSubstat.isPercent ? '%' : ''}`);
+            } else {
+                console.log("No available new substats to add (all possibilities exhausted or conflict with main stats).");
+                // Optionally, could upgrade an existing one instead if pool is empty but slots aren't full
+            }
+        } else {
+            // --- Upgrade an existing substat ---
+            if (item.substats.length > 0) {
+                const randomIndex = Math.floor(Math.random() * item.substats.length);
+                const substatToUpgrade = item.substats[randomIndex];
+                const substatDef = possibleSubstats.find(def => def.stat === substatToUpgrade.stat);
+
+                if (substatDef) {
+                    const randomTierIndex = Math.floor(Math.random() * substatDef.tiers.length);
+                    const addedValue = substatDef.tiers[randomTierIndex];
+                    substatToUpgrade.value += addedValue;
+                    console.log(`Upgraded existing substat: ${substatToUpgrade.stat} +${addedValue}${substatToUpgrade.isPercent ? '%' : ''} (New Value: ${substatToUpgrade.value})`);
+                } else {
+                    console.warn(`Could not find definition for existing substat ${substatToUpgrade.stat} to upgrade it.`);
+                }
+            } else {
+                 console.log("Item has 4 substat slots but no substats to upgrade?"); // Should not happen if generation works
+            }
+        }
+    }
+
+
+    // --- Original Main Stat Increase Logic (Example - Keep or Remove based on desired scaling) ---
+    // This might be redundant if main stats scale differently now. Commenting out the old example.
+    /*
     if (item.stats) {
         if (item.type === 'weapon' && item.stats.attack) {
             item.stats.attack += 1; // Example: +1 attack per level
@@ -387,6 +550,7 @@ export function upgradeInventoryItem(itemIndex) {
         }
          // Add more specific stat upgrades based on item type/stats if needed
     }
+    */
 
     console.log(`Successfully upgraded ${item.name} to Level ${item.upgradeLevel}! Cost: ${cost} gold.`);
 
@@ -402,7 +566,7 @@ export function upgradeInventoryItem(itemIndex) {
         console.log("Recalculating player stats as upgraded item was equipped.");
         recalculateStats();
     }
-
+    savePlayerData(); // Save after upgrading item
     return true; // Indicate success
 }
 

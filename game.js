@@ -11,7 +11,8 @@ import {
     getDefaultStartCoords, // Import the new function
     largeWorldMap // Import the world map data
 } from './map.js';
-import { player, drawPlayer, useItem, equipFirstAvailableItem, initializePlayerStats, savePlayerData, initializePlayerFromData } from './player.js'; // Added savePlayerData and initializePlayerFromData
+// Import savePlayerData from player.js
+import { player, drawPlayer, useItem, equipFirstAvailableItem, initializePlayerStats, savePlayerData, initializePlayerFromData } from './player.js';
 import { enemies, drawEnemies, clearEnemies, spawnEnemiesForMap } from './enemy.js'; // Removed initializeEnemies import
 import { npcs, drawNpcs, clearNpcs, spawnNpcsForMap, getNpcAt } from './npc.js'; // Import NPC functions
 import {
@@ -475,8 +476,9 @@ function update() {
                 clearNpcs();
                 spawnEnemiesForMap(getCurrentMapId()); // Use the *new* currentMapId
                 spawnNpcsForMap(getCurrentMapId());
-                    moved = true; // Count map change as a move
-                    lastMoveTime = now; // Update last move time on successful transition
+                moved = true; // Count map change as a move
+                lastMoveTime = now; // Update last move time on successful transition
+                savePlayerData(); // Save after successful map transition
             } else {
                 // No map transition, check for combat/NPC/walkable
                 // Check for enemy at the PLAYER'S TARGET tile location by comparing player's target tile coords with enemy's tile coords
