@@ -127,6 +127,7 @@ export function initializePlayerFromData(serverData) { // Added export keyword
     player.intelligence = serverData.intelligence || 5;
     player.agility = serverData.agility || 5;
     player.gold = serverData.gold || 0;
+    player.name = serverData.username || `Anon_${Date.now().toString().slice(-4)}`; // Assign username, fallback to Anon_ID
 
     // Equipment needs careful handling - assume server sends full objects
     // Initialize with defaults first, then overwrite with server data if available

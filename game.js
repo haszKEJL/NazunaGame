@@ -13,13 +13,14 @@ import {
 } from './map.js';
 // Import savePlayerData from player.js
 import { player, drawPlayer, useItem, equipFirstAvailableItem, initializePlayerStats, savePlayerData, initializePlayerFromData } from './player.js';
-// Import updateEnemiesFromServer instead of spawnEnemiesForMap
-import { enemies, drawEnemies, clearEnemies, updateEnemiesFromServer } from './enemy.js';
+// Import updateEnemiesFromServer and removeEnemy
+import { enemies, drawEnemies, clearEnemies, updateEnemiesFromServer, removeEnemy } from './enemy.js';
 import { npcs, drawNpcs, clearNpcs, spawnNpcsForMap, getNpcAt } from './npc.js'; // Import NPC functions
 import {
     startCombat,
     processPlayerAction,
-    isCombatEnded,
+    // isCombatEnded, // Replaced by getCombatResult
+    getCombatResult, // Import the new function
     getCurrentCombatEnemy,
     getCombatLog,
     // Import animation state from combat.js
@@ -574,9 +575,16 @@ function update() {
 
 // Combat update logic (This is the correct one, called inside update())
 function updateCombat() {
-    // Check if combat has ended in combat.js
-    if (isCombatEnded()) {
-        console.log("Combat ended, returning to overworld.");
+    // Check combat result from combat.js
+    const result = getCombatResult();
+    if (result.ended) {
+        console.log(`Combat ended. Reason: ${result.reason}. Returning to overworld.`);
+        // --- Emit event on victory ---
+        if (result.reason === 'victory' && result.defeatedEnemyId && socket && socket.connected) {
+            console.log(`Emitting enemyDefeated for ID: ${result.defeatedEnemyId}`);
+            socket.emit('enemyDefeated', { enemyId: result.defeatedEnemyId, mapId: getCurrentMapId() });
+        }
+        // --- End Emit ---
         gameState = 'overworld';
         // currentCombatEnemy is already nullified in combat.js
         return; // Stop further combat processing
@@ -775,10 +783,10 @@ function drawCombatScreen() {
                 TILE_SIZE * playerScale,
                 TILE_SIZE * playerScale
             );
-             // Player HP is shown in the main UI panel, but maybe draw name? - Relative to base position
+             // Player HP is shown in the main UI panel, draw player name from player object
              ctx.fillStyle = 'white';
              ctx.textAlign = 'center';
-             ctx.fillText("Nazuna", playerBaseX, playerBaseY + (TILE_SIZE * playerScale / 2) + 15);
+             ctx.fillText(player.name || "Player", playerBaseX, playerBaseY + (TILE_SIZE * playerScale / 2) + 15); // Use player.name
         }
 
         // --- Draw Combat Menu (Improved Layout) ---
@@ -926,13 +934,15 @@ function initializeSocketConnection() {
         console.log('Connected to game server with ID:', socket.id);
         // Send initial player data to let server know we joined
         // Include name if available, otherwise server might assign one or use ID
-        socket.emit('playerJoin', {
-            name: player.name || "AnonPlayer", // Send player name if available
+        const joinData = {
+            name: player.name || "AnonPlayer", // Get player name at the moment of joining
             x: player.x,
             y: player.y,
-            direction: player.direction || 'front', // Send current direction, default to 'front'
-            mapId: getCurrentMapId() // Send current map ID
-        });
+            direction: player.direction || 'front',
+            mapId: getCurrentMapId()
+        };
+        console.log(`[DEBUG] Emitting playerJoin with name: ${joinData.name}`, joinData); // Log before emitting
+        socket.emit('playerJoin', joinData);
     });
 
     socket.on('disconnect', (reason) => {
@@ -978,7 +988,20 @@ function initializeSocketConnection() {
         updateEnemiesFromServer(serverEnemies || {}); // Pass empty object if null/undefined
     });
 
-    // TODO: Add listeners for 'enemyUpdate' and 'enemyRemoved' later
+    // Listen for enemy removal broadcast by the server
+    socket.on('enemyRemoved', (enemyId) => {
+        console.log(`Received enemyRemoved event for ID: ${enemyId}`);
+        // Find the enemy object by ID to pass to removeEnemy (though removeEnemy now works by ID)
+        const enemyToRemove = enemies.find(e => e.id === enemyId);
+        if (enemyToRemove) {
+            removeEnemy(enemyToRemove); // Remove from client's list
+        } else {
+             // If not found, maybe it was already removed locally (e.g., the player who defeated it)
+             console.log(`Enemy ${enemyId} not found locally, possibly already removed.`);
+        }
+    });
+
+    // TODO: Add listener for 'enemyUpdate' later (for movement/HP changes)
 
     // Add error handling
     socket.on('connect_error', (err) => {

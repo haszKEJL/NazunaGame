@@ -377,7 +377,35 @@ io.on('connection', (socket) => {
         console.log("Current players:", Object.keys(players));
     });
 
-    // Add more event handlers here (e.g., combat actions, item usage, chat)
+    // Handle enemy defeat reported by a client
+    socket.on('enemyDefeated', (data) => {
+        // Basic validation
+        if (!data || typeof data.enemyId !== 'string' || typeof data.mapId !== 'string') {
+            console.warn(`Received invalid enemyDefeated data from ${socket.id}:`, data);
+            return;
+        }
+
+        const { enemyId, mapId } = data;
+        console.log(`Received enemyDefeated event for enemy ${enemyId} on map ${mapId} from player ${socket.id}`);
+
+        // Validate if the map and enemy exist in the server state
+        if (enemiesByMap[mapId] && enemiesByMap[mapId][enemyId]) {
+            // Remove the enemy from the server state
+            delete enemiesByMap[mapId][enemyId];
+            console.log(`Removed enemy ${enemyId} from map ${mapId} state.`);
+
+            // Broadcast the removal to all players in that map room (including the sender)
+            io.to(mapId).emit('enemyRemoved', enemyId);
+            console.log(`Broadcasted enemyRemoved event for ${enemyId} to map room ${mapId}.`);
+
+            // TODO: Consider adding a respawn timer/mechanism here later
+            // Example: setTimeout(() => respawnEnemy(mapId, enemyType, originalX, originalY), 60000); // Respawn after 60s
+        } else {
+            console.warn(`Received enemyDefeated for non-existent enemy (${enemyId}) or map (${mapId}). Might have been defeated already. Ignoring.`);
+        }
+    });
+
+    // Add more event handlers here (e.g., enemy movement, item usage, chat)
 });
 
 

@@ -15,8 +15,13 @@ export const ACTION_RESULT = {
 let currentEnemy = null;
 let isPlayerTurn = true;
 let combatMessageLog = [];
-let combatEnded = false;
+// let combatEnded = false; // Replaced by combatResult
 let playerActionSelected = false; // Flag to prevent multiple actions per turn
+let combatResult = { // New state to track how combat ended
+    ended: false,
+    reason: null, // 'victory', 'defeat', 'flee'
+    defeatedEnemyId: null
+};
 
 // --- Animation State ---
 export let isAnimating = false;
@@ -141,14 +146,15 @@ function enemyAttack() {
 export function startCombat(enemy) {
     currentEnemy = enemy;
     isPlayerTurn = true; // Player usually goes first
-    combatEnded = false;
+    // combatEnded = false; // Replaced by combatResult reset
     playerActionSelected = false;
+    combatResult = { ended: false, reason: null, defeatedEnemyId: null }; // Reset result
     combatMessageLog = [`Encountered ${enemy.type} (Lvl ${enemy.level})!`]; // Added level display
     console.log("Combat started in combat.js");
 }
 
 function checkCombatEnd() {
-    if (combatEnded) return; // Already ended
+    if (combatResult.ended) return true; // Already ended
 
     if (currentEnemy && currentEnemy.hp <= 0) {
         addCombatLog(`${currentEnemy.type} (Lvl ${currentEnemy.level}) defeated!`); // Added level display
@@ -194,24 +200,26 @@ function checkCombatEnd() {
 
         // --- Cleanup ---
         const defeatedEnemy = currentEnemy; // Store reference before nulling
-        removeEnemy(defeatedEnemy); // Remove from game world
-        currentEnemy = null;
-        combatEnded = true;
+        removeEnemy(defeatedEnemy); // Remove from client's game world immediately
+        combatResult = { ended: true, reason: 'victory', defeatedEnemyId: defeatedEnemy.id }; // Set result
+        currentEnemy = null; // Clear current enemy reference
+        // combatEnded = true; // Replaced by combatResult
         addCombatLog("Victory!");
-        return true;
+        return true; // Indicate combat ended
     }
 
     if (player.hp <= 0) {
         addCombatLog("Player defeated! Game Over.");
-        combatEnded = true;
-        // Game over logic will be handled in game.js based on combatEnded state
-        return true;
+        combatResult = { ended: true, reason: 'defeat', defeatedEnemyId: null }; // Set result
+        // combatEnded = true; // Replaced by combatResult
+        // Game over logic will be handled in game.js based on combatResult state
+        return true; // Indicate combat ended
     }
     return false;
 }
 
 export function nextTurn() { // Added export keyword
-    if (combatEnded) return;
+    if (combatResult.ended) return; // Check new result state
     isPlayerTurn = !isPlayerTurn;
     playerActionSelected = false; // Reset flag for player's next turn
     addCombatLog(`--- ${isPlayerTurn ? "Player's" : "Enemy's"} Turn ---`);
@@ -229,7 +237,8 @@ export function nextTurn() { // Added export keyword
  * @param {string} action - The action chosen by the player (e.g., 'attack', 'item', 'flee').
  */
 export function processPlayerAction(action) {
-    if (!isPlayerTurn || combatEnded || playerActionSelected) {
+    // Check new result state
+    if (!isPlayerTurn || combatResult.ended || playerActionSelected) {
         // Return FAILED if action cannot be taken
         return ACTION_RESULT.FAILED;
     }
@@ -261,7 +270,7 @@ export function processPlayerAction(action) {
             const fleeChance = calculateFleeChance();
             if (Math.random() <= fleeChance) {
                 addCombatLog("Successfully fled from combat!");
-                combatEnded = true;
+                combatResult = { ended: true, reason: 'flee', defeatedEnemyId: null }; // Set result
                 currentEnemy = null;
                 actionResult = ACTION_RESULT.ENDED_COMBAT; // Combat ended
             } else {
@@ -292,9 +301,14 @@ export function processPlayerAction(action) {
     return actionResult;
 }
 
-export function isCombatEnded() {
-    return combatEnded;
+// Replace isCombatEnded with getCombatResult
+// export function isCombatEnded() {
+//     return combatEnded;
+// }
+export function getCombatResult() {
+    return combatResult;
 }
+
 
 export function getCurrentCombatEnemy() {
     return currentEnemy;
