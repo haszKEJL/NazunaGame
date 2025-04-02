@@ -108,7 +108,7 @@ io.on('connection', (socket) => {
             // Update player state on the server
             player.x = moveData.x;
             player.y = moveData.y;
-            player.sprite = moveData.sprite; // Update sprite direction
+            player.direction = moveData.direction; // Update direction based on received data
 
             // Broadcast updated player data to others in the same map room
             // Use 'playerUpdate' for consistency
@@ -116,7 +116,7 @@ io.on('connection', (socket) => {
                 id: socket.id,
                 x: player.x,
                 y: player.y,
-                sprite: player.sprite,
+                direction: player.direction, // Send direction string
                 name: player.name // Include name so it's available for drawing
                 // Include other relevant data if needed
             });

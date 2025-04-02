@@ -372,23 +372,29 @@ function update() {
         let moveY = 0;
 
         // Check WASD first, then Arrows as fallback/alternative
+        let newDirection = player.direction; // Keep current direction if no key pressed
         if (keysPressed['w'] || keysPressed['arrowup']) {
             moveY = -TILE_SIZE;
             player.sprite = playerSprites.back;
+            newDirection = 'back';
             attemptedMove = true;
         } else if (keysPressed['s'] || keysPressed['arrowdown']) {
             moveY = TILE_SIZE;
             player.sprite = playerSprites.front;
+            newDirection = 'front';
             attemptedMove = true;
         } else if (keysPressed['a'] || keysPressed['arrowleft']) {
             moveX = -TILE_SIZE;
             player.sprite = playerSprites.left;
+            newDirection = 'left';
             attemptedMove = true;
         } else if (keysPressed['d'] || keysPressed['arrowright']) {
             moveX = TILE_SIZE;
             player.sprite = playerSprites.right;
+            newDirection = 'right';
             attemptedMove = true;
         }
+        player.direction = newDirection; // Update player direction state
 
         // Check movement cooldown *before* calculating target coordinates
         const now = Date.now();
@@ -519,7 +525,8 @@ function update() {
                     lastMoveTime = now; // Update last move time on successful move
                     // --- Emit Movement ---
                     if (socket && socket.connected) {
-                        socket.emit('playerMove', { x: player.x, y: player.y, sprite: player.sprite });
+                        // Send direction string instead of sprite object
+                        socket.emit('playerMove', { x: player.x, y: player.y, direction: player.direction });
                     }
                     // --- End Emit Movement ---
                 } else {
@@ -841,11 +848,13 @@ function drawOtherPlayers(ctx) {
     ctx.textAlign = 'center';
     for (const id in otherPlayers) {
         const other = otherPlayers[id];
-        // Use a default sprite or the one sent from the server
-        const spriteToDraw = other.sprite || playerSprites.front; // Fallback sprite
+        // Select sprite based on the received direction string
+        const direction = other.direction || 'front'; // Default to 'front' if direction is missing
+        const spriteToDraw = playerSprites[direction]; // Get the correct Image object from assets.js
+
         if (spriteToDraw && spriteToDraw.complete && typeof other.x === 'number' && typeof other.y === 'number') {
             ctx.drawImage(
-                spriteToDraw,
+                spriteToDraw, // Use the sprite selected based on direction
                 other.x,
                 other.y,
                 TILE_SIZE,
@@ -920,7 +929,7 @@ function initializeSocketConnection() {
             name: player.name || "AnonPlayer", // Send player name if available
             x: player.x,
             y: player.y,
-            sprite: player.sprite,
+            direction: player.direction || 'front', // Send current direction, default to 'front'
             mapId: getCurrentMapId() // Send current map ID
         });
     });
@@ -933,9 +942,13 @@ function initializeSocketConnection() {
 
     // Listen for updates about a specific player (join/move)
     socket.on('playerUpdate', (playerData) => {
-         // console.log('Player update received:', playerData); // Optional log
+        // console.log('Player update received:', playerData); // Optional log
         if (playerData.id !== socket.id) { // Don't store our own data sent back
-            otherPlayers[playerData.id] = playerData;
+            // Ensure we store the direction received by merging data
+            otherPlayers[playerData.id] = {
+                ...otherPlayers[playerData.id], // Keep existing data if any (like name from initial join)
+                ...playerData // Overwrite with new data (x, y, direction)
+            };
         }
     });
 
