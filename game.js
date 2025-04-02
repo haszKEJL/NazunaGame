@@ -13,7 +13,8 @@ import {
 } from './map.js';
 // Import savePlayerData from player.js
 import { player, drawPlayer, useItem, equipFirstAvailableItem, initializePlayerStats, savePlayerData, initializePlayerFromData } from './player.js';
-import { enemies, drawEnemies, clearEnemies, spawnEnemiesForMap } from './enemy.js'; // Removed initializeEnemies import
+// Import updateEnemiesFromServer instead of spawnEnemiesForMap
+import { enemies, drawEnemies, clearEnemies, updateEnemiesFromServer } from './enemy.js';
 import { npcs, drawNpcs, clearNpcs, spawnNpcsForMap, getNpcAt } from './npc.js'; // Import NPC functions
 import {
     startCombat,
@@ -141,9 +142,9 @@ function initializeGame() {
         console.log("[DEBUG] initializeGame: changeMap finished."); // ADDED LOG
 
         // Spawn entities for the initial map (needs to happen *after* changeMap sets currentMapId)
-        spawnEnemiesForMap(getCurrentMapId()); // Spawn enemies for the current map
-        console.log("[DEBUG] initializeGame: spawnEnemiesForMap finished."); // ADDED LOG
-        spawnNpcsForMap(getCurrentMapId()); // Spawn initial NPCs
+        // REMOVED: spawnEnemiesForMap(getCurrentMapId()); // Enemies are now spawned by the server
+        // console.log("[DEBUG] initializeGame: spawnEnemiesForMap finished."); // ADDED LOG
+        spawnNpcsForMap(getCurrentMapId()); // Spawn initial NPCs (Keep NPCs client-side for now)
         console.log("[DEBUG] initializeGame: spawnNpcsForMap finished."); // ADDED LOG
         setupInputHandlers();
         console.log("[DEBUG] initializeGame: setupInputHandlers finished."); // ADDED LOG
@@ -491,10 +492,10 @@ function update() {
                 // --- End Ensure Walkable After Transition ---
 
                 // Clear and respawn entities for the new map
-                clearEnemies();
+                clearEnemies(); // Clear local enemies before server sends new list
                 clearNpcs();
-                spawnEnemiesForMap(getCurrentMapId()); // Use the *new* currentMapId
-                spawnNpcsForMap(getCurrentMapId());
+                // REMOVED: spawnEnemiesForMap(getCurrentMapId()); // Server will send enemy list via 'currentEnemies' event
+                spawnNpcsForMap(getCurrentMapId()); // Keep spawning NPCs client-side
                 moved = true; // Count map change as a move
                 lastMoveTime = now; // Update last move time on successful transition
                 savePlayerData(); // Save after successful map transition
@@ -969,6 +970,15 @@ function initializeSocketConnection() {
         }
         console.log("Current otherPlayers:", otherPlayers);
     });
+
+    // Listen for the initial list of enemies on the map
+    socket.on('currentEnemies', (serverEnemies) => {
+        console.log('Received current enemies:', serverEnemies);
+        // Call the function in enemy.js to update the local list
+        updateEnemiesFromServer(serverEnemies || {}); // Pass empty object if null/undefined
+    });
+
+    // TODO: Add listeners for 'enemyUpdate' and 'enemyRemoved' later
 
     // Add error handling
     socket.on('connect_error', (err) => {

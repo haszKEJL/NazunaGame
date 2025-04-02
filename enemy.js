@@ -93,161 +93,54 @@ function createEnemy(type, x, y, level) {
         xpReward,
         goldDrop, // Add gold drop amount
         dropTable: baseStats.dropTable, // Pass drop table reference
-        id: Date.now() + Math.random()
+        // Use the ID provided by the server if available, otherwise generate one (though server should always provide)
+        id: arguments.length > 4 && arguments[4] ? arguments[4] : Date.now() + Math.random()
     };
 }
 
 /** Clears all enemies from the game. */
 export function clearEnemies() {
     enemies = [];
-    console.log("All enemies cleared.");
+    console.log("Client: All enemies cleared.");
 }
 
-// Spawn enemies randomly based on the current map ID
+// REMOVED: Client-side spawnEnemiesForMap function is no longer needed.
+/*
 export function spawnEnemiesForMap(mapId) {
-    clearEnemies();
-    const currentMap = getCurrentMap();
-    const mapCols = getMapCols();
-    const mapRows = getMapRows();
-    let spawnCount = 0;
-    let enemyConfig = [];
-    let levelRange = { min: 1, max: 3 }; // Default level range
+    // ... (entire function removed) ...
+}
+*/
 
-    switch (mapId) {
-        case 'world':
-            // Determine biome based on player location
-            const playerTileX = Math.floor(player.x / TILE_SIZE);
-            const playerTileY = Math.floor(player.y / TILE_SIZE);
-            const currentTileType = getTileAt(playerTileX, playerTileY, currentMap); // Use currentMap data
+/**
+ * Updates the client's enemy list based on data received from the server.
+ * @param {object} serverEnemies - An object where keys are enemy IDs and values are enemy data from the server.
+ *                                Example: { 'enemy-1': { id: 'enemy-1', type: 'slime', x: 5, y: 10, level: 2, hp: 20, maxHp: 20 }, ... }
+ */
+export function updateEnemiesFromServer(serverEnemies) {
+    clearEnemies(); // Clear the existing local list first
+    const newEnemies = [];
 
-            console.log(`Spawning for world map. Player at (${playerTileX}, ${playerTileY}), TileType: ${currentTileType}`);
+    for (const enemyId in serverEnemies) {
+        const data = serverEnemies[enemyId];
+        // We need to recreate the full enemy object on the client using createEnemy
+        // This ensures we have sprites, full stats, drop tables, etc.
+        const clientEnemy = createEnemy(data.type, data.x, data.y, data.level);
 
-            switch (currentTileType) {
-                case TILE_GRASS: // Zone 1: Grass (Levels 1-4)
-                    spawnCount = 8;
-                    levelRange = { min: 1, max: 4 };
-                    enemyConfig = [
-                        { type: 'slime', weight: 6 },
-                        { type: 'cultist', weight: 2 }, // Early cultists
-                    ];
-                    console.log("Biome: Grass");
-                    break;
-                case TILE_FOREST: // Zone 2: Forest (Levels 3-6)
-                    spawnCount = 10;
-                     levelRange = { min: 3, max: 6 };
-                    enemyConfig = [
-                        { type: 'slime', weight: 3 },
-                        { type: 'skeleton', weight: 4 },
-                        { type: 'cultist', weight: 3 },
-                    ];
-                     console.log("Biome: Forest");
-                    break;
-                case TILE_MOUNTAIN: // Zone 3: Mountain (Levels 5-8)
-                    spawnCount = 12;
-                     levelRange = { min: 5, max: 8 };
-                    enemyConfig = [
-                        { type: 'skeleton', weight: 5 },
-                        { type: 'demon', weight: 2 }, // Introduce demons
-                        { type: 'cultist', weight: 1 }, // Fewer cultists
-                    ];
-                     console.log("Biome: Mountain");
-                    break;
-                case TILE_DESERT: // Zone 4: Desert (Levels 7-10)
-                    spawnCount = 10;
-                     levelRange = { min: 7, max: 10 };
-                    enemyConfig = [
-                        { type: 'skeleton', weight: 3 }, // Tougher skeletons
-                        { type: 'demon', weight: 4 },
-                        // Add desert-specific enemy type later?
-                    ];
-                     console.log("Biome: Desert");
-                    break;
-                 case TILE_SWAMP: // Zone 5: Swamp (Levels 9-12)
-                    spawnCount = 15;
-                     levelRange = { min: 9, max: 12 };
-                    enemyConfig = [
-                        { type: 'slime', weight: 2 }, // Stronger slimes?
-                        { type: 'demon', weight: 5 },
-                        { type: 'cultist', weight: 3 }, // Swamp cultists?
-                        // Add swamp-specific enemy type later?
-                    ];
-                     console.log("Biome: Swamp");
-                    break;
-                default: // Water, City Entrance etc. - No spawns or default grass?
-                    spawnCount = 5; // Default to grass spawns if on non-biome tile
-                     levelRange = { min: 1, max: 4 };
-                    enemyConfig = [ { type: 'slime', weight: 1 } ];
-                    console.log("Biome: Other (Defaulting to low-level Slime)");
-                    break;
-            }
-            break; // End of case 'world'
+        if (clientEnemy) {
+            // Overwrite client-generated ID/HP with server-provided data
+            clientEnemy.id = data.id;
+            clientEnemy.hp = data.hp;
+            clientEnemy.maxHp = data.maxHp;
+            // Add any other server-authoritative fields here if needed in the future
 
-        case 'city':
-            spawnCount = 0; // No enemies in city
-            break;
-        case 'dungeon':
-            spawnCount = 10; // Example: Max 10 enemies in dungeon
-            enemyConfig = [
-                { type: 'slime', weight: 3 },
-                { type: 'skeleton', weight: 4 },
-                { type: 'cultist', weight: 3 },
-                { type: 'demon', weight: 1 }, // Lower chance for demon
-            ];
-            break;
-        default:
-            console.error("Unknown map ID for spawning enemies:", mapId);
-            return;
-    }
-
-    if (spawnCount === 0 || enemyConfig.length === 0) {
-        console.log(`No enemies to spawn for map '${mapId}'.`);
-        return;
-    }
-
-    // Calculate total weight for weighted random selection
-    const totalWeight = enemyConfig.reduce((sum, config) => sum + config.weight, 0);
-
-    let attempts = 0;
-    const maxAttempts = spawnCount * 5; // Prevent infinite loop if map is full
-
-    while (enemies.length < spawnCount && attempts < maxAttempts) {
-        attempts++;
-        // Choose enemy type based on weight
-        let randomWeight = Math.random() * totalWeight;
-        let chosenType = null;
-        for (const config of enemyConfig) {
-            randomWeight -= config.weight;
-            if (randomWeight <= 0) {
-                chosenType = config.type;
-                break;
-            }
-        }
-        if (!chosenType) continue; // Should not happen if totalWeight > 0
-
-        // Choose random position
-        const x = Math.floor(Math.random() * mapCols);
-        const y = Math.floor(Math.random() * mapRows);
-
-        // Check if tile is walkable and not already occupied by another enemy
-        if (isWalkable(x, y, currentMap, mapCols, mapRows) && !enemies.some(e => e.x === x && e.y === y)) {
-            const enemyData = enemyTypes[chosenType];
-            // Determine random level within the ZONE's level range
-            const level = Math.floor(Math.random() * (levelRange.max - levelRange.min + 1)) + levelRange.min;
-
-            const enemy = createEnemy(chosenType, x, y, level);
-            if (enemy) {
-                // Optional: Check if the spawned enemy's tile matches the target biome?
-                // This prevents enemies spawning randomly across the whole map if desired.
-                // For now, allow random placement anywhere walkable.
-                enemies.push(enemy);
-            }
+            newEnemies.push(clientEnemy);
+        } else {
+            console.warn(`Failed to create client enemy object for server data:`, data);
         }
     }
 
-    if (attempts >= maxAttempts) {
-        console.warn(`Reached max spawn attempts (${maxAttempts}) for map '${mapId}'. Spawned ${enemies.length}/${spawnCount} enemies.`);
-    }
-    console.log(`Enemies spawned for map '${mapId}':`, enemies);
+    enemies = newEnemies; // Replace the local array with the newly created ones
+    console.log(`Client: Updated enemies from server. Count: ${enemies.length}`);
 }
 
 
