@@ -1,6 +1,6 @@
 // --- Substat Definitions ---
 
-const possibleSubstats = [
+export const possibleSubstats = [ // Added export keyword
     { stat: 'hp', tiers: [100, 150, 200], isPercent: false }, // Flat HP
     { stat: 'hpPercent', tiers: [4, 5, 6], isPercent: true }, // HP %
     { stat: 'attack', tiers: [10, 15, 20], isPercent: false }, // Flat Attack
