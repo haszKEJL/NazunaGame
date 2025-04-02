@@ -36,6 +36,7 @@ import {
     showInventory, hideInventory // Add inventory functions (will be added to ui.js)
 } from './ui.js';
 import './auth.js'; // Import auth.js to handle login/register
+import { io } from "socket.io-client"; // Import Socket.IO client library
 
 // --- Canvas Setup ---
 const canvas = document.getElementById('gameCanvas');
@@ -50,6 +51,10 @@ if (!canvas || !ctx) {
 // Adjust canvas size if needed (or keep fixed based on HTML/CSS)
 // canvas.width = MAP_COLS * TILE_SIZE;
 // canvas.height = MAP_ROWS * TILE_SIZE;
+
+// --- Network State ---
+let socket = null; // Socket.IO instance
+let otherPlayers = {}; // Store data about other connected players { id: { x, y, sprite, name, ... } }
 
 // --- Game State ---
 let gameRunning = false;
@@ -449,6 +454,13 @@ function update() {
                 player.x = newPlayerCoords.x;
                 player.y = newPlayerCoords.y;
                 changeMap(newMapId); // Change map data FIRST
+                // --- Notify Server of Map Change ---
+                if (socket && socket.connected) {
+                    socket.emit('changeMap', newMapId);
+                    console.log(`Emitted changeMap event for map: ${newMapId}`);
+                    otherPlayers = {}; // Clear other players locally immediately after changing map
+                }
+                // --- End Notify Server ---
                 mapChanged = true;
 
                 // --- Ensure Player Lands on Walkable Tile After Transition ---
@@ -505,6 +517,11 @@ function update() {
                     player.y = targetY;
                     moved = true;
                     lastMoveTime = now; // Update last move time on successful move
+                    // --- Emit Movement ---
+                    if (socket && socket.connected) {
+                        socket.emit('playerMove', { x: player.x, y: player.y, sprite: player.sprite });
+                    }
+                    // --- End Emit Movement ---
                 } else {
                     // Bumped into wall
                     moved = true; // Still counts as a turn
@@ -623,7 +640,8 @@ function draw() {
     drawMap(ctx);
     drawEnemies(ctx);
     drawNpcs(ctx); // Draw NPCs
-    drawPlayer(ctx);
+    drawOtherPlayers(ctx); // Draw other players
+    drawPlayer(ctx); // Draw local player last (on top)
     ctx.restore(); // Restore camera state
 
     // Overlay screens based on state (Combat, Dialogue/Inventory are HTML, Trade later)
@@ -817,6 +835,31 @@ function gameLoop() {
     requestAnimationFrame(gameLoop); // Keep the loop running
 }
 
+// --- Drawing Other Players ---
+function drawOtherPlayers(ctx) {
+    ctx.font = '10px "Press Start 2P"'; // Use pixel font for names
+    ctx.textAlign = 'center';
+    for (const id in otherPlayers) {
+        const other = otherPlayers[id];
+        // Use a default sprite or the one sent from the server
+        const spriteToDraw = other.sprite || playerSprites.front; // Fallback sprite
+        if (spriteToDraw && spriteToDraw.complete && typeof other.x === 'number' && typeof other.y === 'number') {
+            ctx.drawImage(
+                spriteToDraw,
+                other.x,
+                other.y,
+                TILE_SIZE,
+                TILE_SIZE
+            );
+            // Draw player name above them
+            ctx.fillStyle = 'white'; // Ensure color is set each time
+            ctx.fillText(other.name || `Player ${id.substring(0, 4)}`, other.x + TILE_SIZE / 2, other.y - 5);
+        } else {
+            // console.warn(`Could not draw player ${id}: Missing data or sprite not loaded`, other);
+        }
+    }
+}
+
 // --- Start Game Logic ---
 function attemptGameInitialization() {
     console.log(`[DEBUG] attemptGameInitialization called. assetsAreLoaded=${assetsAreLoaded}, playerDataInitialized=${playerDataInitialized}`); // ADDED LOG
@@ -868,3 +911,90 @@ document.addEventListener('playerDataReady', () => {
     }
     attemptGameInitialization(); // Try to initialize (will only succeed if assets are also loaded)
 });
+
+// --- Socket.IO Client Setup ---
+function initializeSocketConnection() {
+    // Connect to the server (adjust URL if needed, maybe use config.js later)
+    // Ensure this runs *after* player is authenticated and has basic data
+    const serverUrl = `http://${window.location.hostname}:5001`; // Dynamically use hostname
+    console.log(`Attempting to connect to Socket.IO server at ${serverUrl}`);
+    socket = io(serverUrl);
+
+    socket.on('connect', () => {
+        console.log('Connected to game server with ID:', socket.id);
+        // Send initial player data to let server know we joined
+        // Include name if available, otherwise server might assign one or use ID
+        socket.emit('playerJoin', {
+            name: player.name || "AnonPlayer", // Send player name if available
+            x: player.x,
+            y: player.y,
+            sprite: player.sprite,
+            mapId: getCurrentMapId() // Send current map ID
+        });
+    });
+
+    socket.on('disconnect', (reason) => {
+        console.log('Disconnected from game server:', reason);
+        otherPlayers = {}; // Clear other players on disconnect
+        // Optionally, show a message to the user
+    });
+
+    // Listen for updates about a specific player (join/move)
+    socket.on('playerUpdate', (playerData) => {
+         // console.log('Player update received:', playerData); // Optional log
+        if (playerData.id !== socket.id) { // Don't store our own data sent back
+            otherPlayers[playerData.id] = playerData;
+        }
+    });
+
+    // Listen for a player disconnecting
+    socket.on('playerLeft', (playerId) => {
+        console.log('Player left:', playerId);
+        delete otherPlayers[playerId];
+    });
+
+    // Listen for the initial list of players already in the game/map
+    socket.on('currentPlayers', (players) => {
+        console.log('Received current players:', players);
+        otherPlayers = {}; // Reset local list
+        for (const playerId in players) {
+            if (playerId !== socket.id) {
+                otherPlayers[playerId] = players[playerId];
+            }
+        }
+        console.log("Current otherPlayers:", otherPlayers);
+    });
+
+    // Add error handling
+    socket.on('connect_error', (err) => {
+        console.error('Socket Connection Error:', err.message, err.data);
+        // Maybe display an error to the user (e.g., "Cannot connect to server")
+        // Prevent game start or handle gracefully
+        gameRunning = false; // Stop game if connection fails initially?
+        // Consider adding a UI element to show connection status/errors
+    });
+
+    socket.on('error', (error) => {
+        console.error('Socket Error:', error);
+    });
+}
+
+// Modify attemptGameInitialization to include socket connection
+// Ensure this is the only definition of this function
+function attemptGameInitialization() {
+    console.log(`[DEBUG] attemptGameInitialization called. assetsAreLoaded=${assetsAreLoaded}, playerDataInitialized=${playerDataInitialized}`);
+    if (assetsAreLoaded && playerDataInitialized && !gameRunning) { // Add !gameRunning check to prevent multiple initializations
+        console.log("Assets loaded and player data initialized. Initializing Socket.IO and Game...");
+        try {
+            initializeSocketConnection(); // Initialize Socket.IO connection
+            initializeGame(); // Initialize game logic
+            // Note: initializeGame now sets gameRunning = true and starts the loop
+        } catch (error) {
+            console.error("Error during game/socket initialization:", error);
+            gameRunning = false; // Ensure game doesn't run if init fails
+            // Display error to user?
+        }
+    } else {
+        console.log(`Waiting or already running: Assets Loaded=${assetsAreLoaded}, Player Data Initialized=${playerDataInitialized}, Game Running=${gameRunning}`);
+    }
+}
