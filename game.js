@@ -927,8 +927,11 @@ function initializeSocketConnection() {
     // Connect to the server using the same origin as the page.
     // OnRender handles HTTPS termination and routing to the correct port.
     // io() without arguments defaults to the current origin.
-    console.log(`Attempting to connect to Socket.IO server at origin: ${window.location.origin}`);
-    socket = io(); // Connect to the origin the page was served from (handles HTTPS correctly on OnRender)
+    const renderURL = 'https://nazunagame.onrender.com/'; // Explicitly set Render URL
+    console.log(`Attempting to connect to Socket.IO server at: ${renderURL}`);
+    socket = io(renderURL, {
+        transports: ['websocket'] // Force WebSocket transport
+    }); // Connect to the Render URL
 
     socket.on('connect', () => {
         console.log('Connected to game server with ID:', socket.id);
