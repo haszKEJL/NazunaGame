@@ -3,6 +3,14 @@ import { player, gainXP, getStatBonus, addItemToInventory, useItem } from './pla
 import { removeEnemy } from './enemy.js'; // Keep for removing enemy on victory
 import { items, generateInitialSubstats } from './items.js'; // Added generateInitialSubstats import
 
+// Define action result constants
+export const ACTION_RESULT = {
+    SUCCESS_ANIMATING: 'success_animating',
+    SUCCESS_NO_ANIMATION: 'success_no_animation',
+    FAILED: 'failed',
+    ENDED_COMBAT: 'ended_combat'
+};
+
 // --- Combat State ---
 let currentEnemy = null;
 let isPlayerTurn = true;
@@ -217,62 +225,71 @@ export function nextTurn() { // Added export keyword
 
 /**
  * Processes player input during combat.
- * Returns true if the combat should end.
+ * Returns an ACTION_RESULT status.
  * @param {string} action - The action chosen by the player (e.g., 'attack', 'item', 'flee').
  */
 export function processPlayerAction(action) {
     if (!isPlayerTurn || combatEnded || playerActionSelected) {
-        return combatEnded; // Don't allow action if not player's turn, combat ended, or action already taken
+        // Return FAILED if action cannot be taken
+        return ACTION_RESULT.FAILED;
     }
 
     playerActionSelected = true; // Mark action as taken for this turn
+    let actionResult = ACTION_RESULT.FAILED; // Default to failed
 
     switch (action.toLowerCase()) {
         case 'attack':
-            playerAttack();
-            // Attack action sets animation, turn progresses after animation
+            playerAttack(); // Sets isAnimating = true
+            actionResult = ACTION_RESULT.SUCCESS_ANIMATING;
             break;
         case 'item':
             // Simple implementation: Use first Health Potion if available
             // TODO: Add UI for item selection during combat
             addCombatLog("Player attempts to use an item...");
-            const itemUsed = useItem('Health Potion'); // Assuming useItem returns true on success, false on fail/not found
+            const itemUsed = useItem('Health Potion');
             if (itemUsed) {
                 addCombatLog("Used Health Potion.");
-                // Item use doesn't trigger animation for now, so we can potentially call nextTurn directly
-                // However, to keep flow consistent with attack, let's wait for game.js to call nextTurn after this frame
+                actionResult = ACTION_RESULT.SUCCESS_NO_ANIMATION; // Success, no animation
             } else {
                 addCombatLog("Could not use Health Potion (None available or HP full).");
                 playerActionSelected = false; // Allow another action if item use fails
-                return combatEnded; // Don't advance turn
+                actionResult = ACTION_RESULT.FAILED;
             }
-            break; // Turn progresses after successful item use (handled by game.js)
+            break;
         case 'flee':
             addCombatLog("Player attempts to flee...");
             const fleeChance = calculateFleeChance();
             if (Math.random() <= fleeChance) {
                 addCombatLog("Successfully fled from combat!");
-                combatEnded = true; // Set flag to end combat
-                currentEnemy = null; // Clear enemy reference
-                // No animation for fleeing, combat ends immediately
+                combatEnded = true;
+                currentEnemy = null;
+                actionResult = ACTION_RESULT.ENDED_COMBAT; // Combat ended
             } else {
                 addCombatLog("Failed to flee!");
-                // Flee failure uses the player's turn, enemy will attack next
-                // Turn progression happens after this action completes (handled by game.js)
+                actionResult = ACTION_RESULT.SUCCESS_NO_ANIMATION; // Action succeeded (turn used), but no animation
             }
-            break; // Turn progresses after flee attempt (handled by game.js)
+            break;
         default:
             addCombatLog("Unknown action.");
             playerActionSelected = false; // Allow another action
-            return combatEnded;
+            actionResult = ACTION_RESULT.FAILED;
+            break; // Ensure break here
     }
 
-    // If an action was successfully taken (attack), check end.
-    // Turn progression will be handled in game.js after animation.
-    checkCombatEnd();
-    // We don't call nextTurn here anymore if animating
+    // Check if combat ended *after* the action (e.g., player attack killed enemy)
+    // Don't override if action itself ended combat (like successful flee)
+    if (actionResult !== ACTION_RESULT.ENDED_COMBAT && checkCombatEnd()) {
+         // If checkCombatEnd returns true, it means the enemy or player was defeated by the action.
+         actionResult = ACTION_RESULT.ENDED_COMBAT;
+    }
 
-    return combatEnded;
+    // If the action failed, don't proceed the turn
+    if (actionResult === ACTION_RESULT.FAILED) {
+        playerActionSelected = false; // Reset flag so player can try again
+    }
+
+    // Return the result status
+    return actionResult;
 }
 
 export function isCombatEnded() {

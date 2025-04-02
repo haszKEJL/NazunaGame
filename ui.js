@@ -237,6 +237,15 @@ function updateSelectedItemDetails(itemIndex) {
      statsHTML += `<br><span>Type: ${item.type || 'N/A'}</span><br>`;
      if(item.slot) statsHTML += `<span>Slot: ${item.slot}</span><br>`;
 
+     // Display Substats
+     if (Array.isArray(item.substats) && item.substats.length > 0) {
+         statsHTML += `<hr><span>Substats:</span><br>`;
+         item.substats.forEach(sub => {
+             // Format the substat display
+             statsHTML += `<span>&nbsp;&nbsp;• ${sub.stat}: +${sub.value.toFixed(sub.isPercent ? 1 : 0)}${sub.isPercent ? '%' : ''}</span><br>`;
+         });
+     }
+
      selectedItemStats.innerHTML = statsHTML;
 
      // Display upgrade info
@@ -484,23 +493,17 @@ function setupListeners() {
              if (selectedInventoryIndex !== null && !upgradeItemBtn.disabled) {
                  const itemIndexToUpdate = selectedInventoryIndex; // Store index before potential changes
                  console.log(`UI: Attempting to upgrade item at index: ${itemIndexToUpdate}`);
-                 const success = upgradeInventoryItem(itemIndexToUpdate); // Use stored index
+                 const success = upgradeInventoryItem(itemIndexToUpdate);
 
                  if (success) {
                      addLogMessage("Item upgraded!");
-                     updateInventoryUI(); // Refresh grid (this clears current selection state in UI)
+                     // No need to rebuild the whole grid, just update the details pane and main UI
+                     updateSelectedItemDetails(itemIndexToUpdate); // Update details for the same item
                      updateUI(); // Update gold in main panel
-                     // Explicitly re-select the item using the stored index AFTER UI refresh
-                     if (player.inventory[itemIndexToUpdate]) { // Check if item still exists at the original index
-                        updateSelectedItemDetails(itemIndexToUpdate); // Re-display details for the item at the original index
-                     } else {
-                        // Item might have been consumed or moved, clear details
-                        updateSelectedItemDetails(null);
-                     }
                  } else {
-                     addLogMessage("Upgrade failed."); // Add feedback
+                     addLogMessage("Upgrade failed."); // Add feedback (e.g., not enough gold)
                      // Update details to show potentially changed gold/cost, keep selection
-                     updateSelectedItemDetails(itemIndexToUpdate); // Re-display details for the item at the original index
+                     updateSelectedItemDetails(itemIndexToUpdate);
                  }
              }
          });

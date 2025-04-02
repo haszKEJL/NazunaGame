@@ -26,7 +26,8 @@ import {
     animatingCharacter,
     animationProgress, // Keep for drawing, but don't modify directly
     updateAnimationProgress, // Import the new function
-    nextTurn // Import nextTurn to call it after animation
+    nextTurn, // Import nextTurn to call it after animation
+    ACTION_RESULT // Import the action result constants
 } from './combat.js';
 // Import dialogue and inventory functions from ui.js
 import {
@@ -581,11 +582,24 @@ function updateCombat() {
     // Add more actions later (Defend?)
 
     if (playerAction) {
-        processPlayerAction(playerAction); // Let combat.js handle the action and turn flow (this will set isAnimating)
-        // keysPressed = {}; // Don't clear all keys, just the one used
+        const result = processPlayerAction(playerAction); // Get the result status
+
+        // Decide whether to proceed the turn based on the result
+        // We proceed the turn if the action was successful (with or without animation)
+        // AND the combat didn't end as a direct result of the action (like flee success or killing blow).
+        // Note: Animation completion handles its own nextTurn call.
+        if (result === ACTION_RESULT.SUCCESS_NO_ANIMATION) {
+            // Action succeeded without animation (e.g., item use, failed flee)
+            // Proceed to the next turn immediately
+            nextTurn();
+        }
+        // If result is SUCCESS_ANIMATING, we wait for animation to finish.
+        // If result is FAILED, we don't proceed the turn (playerActionSelected is reset in combat.js).
+        // If result is ENDED_COMBAT, the combat loop will terminate anyway.
     }
 
-    // Enemy turn logic is now handled via nextTurn() after animation completes
+    // Enemy turn logic is now handled via nextTurn() either after animation completes
+    // or immediately after a non-animated successful player action.
 }
 
 
