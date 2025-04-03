@@ -464,8 +464,15 @@ function update() {
                 changeMap(newMapId); // Change map data FIRST
                 // --- Notify Server of Map Change ---
                 if (socket && socket.connected) {
-                    socket.emit('changeMap', newMapId);
-                    console.log(`Emitted changeMap event for map: ${newMapId}`);
+                    // Send the full data object expected by the server
+                    const mapChangeData = {
+                        newMapId: newMapId,
+                        x: player.x, // Send the player's new coordinates on the new map
+                        y: player.y,
+                        direction: player.direction // Send current direction
+                    };
+                    socket.emit('changeMap', mapChangeData);
+                    console.log(`Emitted changeMap event:`, mapChangeData); // Log the full data sent
                     otherPlayers = {}; // Clear other players locally immediately after changing map
                 }
                 // --- End Notify Server ---
