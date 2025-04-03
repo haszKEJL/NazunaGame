@@ -116,7 +116,7 @@ function playerAttack() {
 }
 
 function enemyAttack() {
-    if (!currentEnemy || combatEnded) return;
+    if (!currentEnemy || combatResult.ended) return; // Use combatResult.ended
     addCombatLog(`${currentEnemy.type} (Lvl ${currentEnemy.level}) attacks!`); // Added level display
 
     // Start animation
