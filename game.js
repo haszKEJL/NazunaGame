@@ -949,7 +949,8 @@ function initializeSocketConnection() {
             x: player.x,
             y: player.y,
             direction: player.direction || 'front',
-            mapId: getCurrentMapId()
+            mapId: getCurrentMapId(),
+            sprite: player.direction || 'front' // Add the sprite property (using direction string for now)
         };
         console.log(`[DEBUG] Emitting playerJoin with name: ${joinData.name}`, joinData); // Log before emitting
         socket.emit('playerJoin', joinData);
