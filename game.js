@@ -963,8 +963,8 @@ function initializeSocketConnection() {
 
     // Listen for updates about a specific player (join/move)
     socket.on('playerUpdate', (playerData) => {
-        // console.log('Player update received:', playerData); // Optional log
-        if (playerData.id !== socket.id) { // Don't store our own data sent back
+        console.log('[SOCKET] Received playerUpdate:', JSON.stringify(playerData)); // DETAILED LOG
+        if (playerData && playerData.id && playerData.id !== socket.id) { // Don't store our own data sent back, check if playerData and id exist
             // Ensure we store the direction received by merging data
             otherPlayers[playerData.id] = {
                 ...otherPlayers[playerData.id], // Keep existing data if any (like name from initial join)
@@ -975,46 +975,57 @@ function initializeSocketConnection() {
 
     // Listen for a player disconnecting
     socket.on('playerLeft', (playerId) => {
-        console.log('Player left:', playerId);
-        delete otherPlayers[playerId];
+        console.log(`[SOCKET] Received playerLeft: ${playerId}`); // DETAILED LOG
+        if (playerId && otherPlayers[playerId]) {
+             delete otherPlayers[playerId];
+             console.log(`[GAME] Removed player ${playerId} from otherPlayers.`);
+        } else {
+             console.warn(`[GAME] Received playerLeft for unknown or already removed ID: ${playerId}`);
+        }
     });
 
     // Listen for the initial list of players already in the game/map
-    socket.on('currentPlayers', (players) => {
-        console.log('Received current players:', players);
+    socket.on('currentPlayers', (receivedPlayers) => {
+        console.log('[SOCKET] Received currentPlayers:', JSON.stringify(receivedPlayers)); // DETAILED LOG
         otherPlayers = {}; // Reset local list
-        for (const playerId in players) {
+        let count = 0;
+        for (const playerId in receivedPlayers) {
             if (playerId !== socket.id) {
+                otherPlayers[playerId] = receivedPlayers[playerId];
+                count++;
                 otherPlayers[playerId] = players[playerId];
             }
         }
-        console.log("Current otherPlayers:", otherPlayers);
+        console.log(`[GAME] Processed currentPlayers. Stored ${count} other players. Current otherPlayers:`, JSON.stringify(otherPlayers));
     });
 
     // Listen for the initial list of enemies on the map
     socket.on('currentEnemies', (serverEnemies) => {
-        console.log('Received current enemies:', serverEnemies);
+        console.log('[SOCKET] Received currentEnemies:', JSON.stringify(serverEnemies)); // DETAILED LOG
         // Call the function in enemy.js to update the local list
         updateEnemiesFromServer(serverEnemies || {}); // Pass empty object if null/undefined
+        console.log(`[GAME] Updated enemies from currentEnemies. Current enemy count: ${enemies.length}`);
     });
 
     // Listen for a single enemy spawning
     socket.on('enemySpawned', (enemyData) => {
-        console.log('Received enemySpawned:', enemyData);
+        console.log('[SOCKET] Received enemySpawned:', JSON.stringify(enemyData)); // DETAILED LOG
         // Call a new function in enemy.js to add this single enemy
         addEnemy(enemyData); // We will create this function in enemy.js
+        console.log(`[GAME] Added spawned enemy ${enemyData?.id}. Current enemy count: ${enemies.length}`);
     });
 
     // Listen for enemy removal broadcast by the server
     socket.on('enemyRemoved', (enemyId) => {
-        console.log(`Received enemyRemoved event for ID: ${enemyId}`);
+        console.log(`[SOCKET] Received enemyRemoved event for ID: ${enemyId}`); // DETAILED LOG
         // Find the enemy object by ID to pass to removeEnemy (though removeEnemy now works by ID)
         const enemyToRemove = enemies.find(e => e.id === enemyId);
         if (enemyToRemove) {
             removeEnemy(enemyToRemove); // Remove from client's list
+            console.log(`[GAME] Removed enemy ${enemyId}. Current enemy count: ${enemies.length}`);
         } else {
              // If not found, maybe it was already removed locally (e.g., the player who defeated it)
-             console.log(`Enemy ${enemyId} not found locally, possibly already removed.`);
+             console.warn(`[GAME] Enemy ${enemyId} for removal not found locally, possibly already removed.`);
         }
     });
 
